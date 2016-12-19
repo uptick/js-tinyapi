@@ -80,4 +80,4 @@ function postForm( url, data ) {
   return ajax( url, body, 'post' );
 }
 
-export { createAction, postJson, postForm, csrfSettings };
+export { postJson, postForm, csrfSettings };

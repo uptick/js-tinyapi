@@ -1,4 +1,4 @@
-import { ApiError, ajax, capitalize, supplant } from './utils';
+import { csrfSettings, ApiError, ajax, capitalize, supplant } from './utils';
 
 /**
  * Describes an API.
@@ -23,7 +23,7 @@ export default class Api {
     // Prepare the context to be passed to the request method.
     let ctx = {
       type: 'json',
-      path: path + '/',
+      path: path + ((path[path.length - 1] == '/') ? '' : '/'),
       method: method,
       ...options
     };
@@ -165,3 +165,5 @@ export default class Api {
     return ajax( finalPath, body, method, type );
   }
 }
+
+export { csrfSettings, ApiError };
