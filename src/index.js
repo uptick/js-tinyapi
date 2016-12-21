@@ -52,8 +52,10 @@ export default class Api {
 
         // If we matched a CRUD endpoint, perform the setup.
         if( match[1] == 'CRUD' ) {
-          let crudKey = path.slice( path.lastIndexOf( '/' ) );
-          this.makeCrudEndpoints( crudKey, path );
+          const ii = path.lastIndexOf( '/' ) + 1;
+          let crudKey = path.slice( ii );
+          let crudPath = path.slice( 0, ii );
+          this.makeCrudEndpoints( crudKey, crudPath );
         }
 
         // The endpoint can be just the name of the function
@@ -80,7 +82,8 @@ export default class Api {
 
   makeCrudEndpoints( key, path ) {
     let ep = [ key, key + 's' ];
-    const basePath = path + '/' + ep[1];
+    const joiner = ((path[path.length - 1] == '/') ? '' : '/');
+    const basePath = path + joiner + ep[1];
     const baseName = capitalize( ep[0] );
     const baseNamePlural = capitalize( ep[1] );
     this.crud[ep[0]] = {
