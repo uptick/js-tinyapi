@@ -63,7 +63,7 @@ export default class Api {
         else {
           if( !(ep instanceof Object) )
             ep = { name: ep };
-          const { name, options = {} } = ep;
+          const {name, options={}} = ep;
 
           // Make the endpoint.
           this.makeEndpoint( name, path + '/', match[1], options );
@@ -81,7 +81,7 @@ export default class Api {
   }
 
   makeCrudEndpoints( key, path ) {
-    let ep = [ key, key + 's' ];
+    let ep = [key.slice( 0, -1 ), key];
     const joiner = ((path[path.length - 1] == '/') ? '' : '/');
     const basePath = path + joiner + ep[1];
     const baseName = capitalize( ep[0] );
@@ -126,7 +126,7 @@ export default class Api {
   request( endpoint, options = {} ) {
     const { method = endpoint.method, path = endpoint.path,
             args = {}, type = endpoint.type, data,
-            include = [] } = options;
+            include = (endpoint.include || []) } = options;
     let queryString = [];
 
     // Process the body. This can end up being a FormData object
