@@ -126,6 +126,7 @@ export default class Api {
   request( endpoint, options = {} ) {
     const { method = endpoint.method, path = endpoint.path,
             args = {}, type = endpoint.type, data,
+            contentType = endpoint.contentType,
             include = (endpoint.include || []) } = options;
     let queryString = [];
 
@@ -165,7 +166,7 @@ export default class Api {
       finalPath += '?' + queryString.join( '&' );
 
     console.debug( `API ${method} ${type}: ${finalPath}`, data );
-    return ajax( finalPath, body, method, type );
+    return ajax( finalPath, body, method, type, contentType );
   }
 }
 

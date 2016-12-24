@@ -31,21 +31,21 @@ var csrfSettings = {
 };
 
 function fetchHeaders( opts ) {
-  const { method = 'get', dataType } = opts || {};
+  const {method = 'get', dataType, contentType='application/vnd.api+json'} = opts || {};
   let headers = new Headers({
     'X-Requested-With': 'XMLHttpRequest'
   });
   if( dataType == 'json' )
-    headers.set( 'Content-Type', 'application/vnd.api+json' );
+    headers.set( 'Content-Type', contentType );
   if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) )
     headers.set( 'X-CSRFToken', csrfSettings.token );
   return headers;
 }
 
-export function ajax( url, body, method, dataType ) {
+export function ajax( url, body, method, dataType, contentType ) {
   let request = new Request( url, {
     method,
-    headers: fetchHeaders({ method, dataType }),
+    headers: fetchHeaders( {method, dataType, contentType} ),
     credentials: 'same-origin',
     body: body 
   });
@@ -66,18 +66,18 @@ export function ajax( url, body, method, dataType ) {
 /**
  * Helper for posting JSON data.
  */
-function postJson( url, data ) {
-  return ajax( url, JSON.stringify( data ), 'post', 'json' );
+function postJson( url, data, contentType ) {
+  return ajax( url, JSON.stringify( data ), 'post', 'json', contentType );
 }
 
 /**
  * Helper for posting form data.
  */
-function postForm( url, data ) {
+function postForm( url, data, contentType ) {
   let body = new FormData();
   for( let k in data )
     body.append( k, data[k] );
-  return ajax( url, body, 'post' );
+  return ajax( url, body, 'post', contentType );
 }
 
 export { postJson, postForm, csrfSettings };
