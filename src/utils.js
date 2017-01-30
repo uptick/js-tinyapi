@@ -80,4 +80,4 @@ function postForm( url, data, contentType ) {
   return ajax( url, body, 'post', contentType );
 }
 
-export { postJson, postForm, csrfSettings };
+export {postJson, postForm, csrfSettings};

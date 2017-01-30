@@ -1,4 +1,6 @@
-import { csrfSettings, ApiError, ajax, capitalize, supplant } from './utils';
+import {
+  postJson, csrfSettings, ApiError, ajax, capitalize, supplant
+} from './utils';
 
 /**
  * Describes an API.
@@ -89,32 +91,32 @@ export default class Api {
     this.crud[ep[0]] = {
       list: this.makeEndpoint( 'list' + baseNamePlural, basePath, 'GET' ),
       create: this.makeEndpoint( 'create' + baseName, basePath, 'POST', {
-        handler: (req, data, opts = {}) => req({
+        handler: (req, payload, opts = {}) => req({
           ...opts,
-          data
+          payload
         })
       }),
       detail: this.makeEndpoint( 'get' + baseName, basePath + '/{id}', 'GET', {
         handler: (req, id, opts = {}) => {
           return req({
             ...opts,
-            args: {id}
+            params: {id}
           });
         }
       }),
-      update: this.makeEndpoint( 'get' + baseName, basePath + '/{id}', 'PATCH', {
-        handler: (req, id, data, opts = {}) => {
+      update: this.makeEndpoint( 'update' + baseName, basePath + '/{id}', 'PATCH', {
+        handler: (req, id, payload, opts = {}) => {
           return req({
             ...opts,
-            args: {id},
-            data
+            params: {id},
+            payload
           });
         }
       }),
       remove: this.makeEndpoint( 'remove' + baseName, basePath + '/{id}', 'DELETE', {
         handler: (req, id, opts = {}) => req({
           ...opts,
-          args: {id}
+          params: {id}
         })
       })
     };
@@ -125,7 +127,7 @@ export default class Api {
    */
   request( endpoint, options = {} ) {
     const { method = endpoint.method, path = endpoint.path,
-            args = {}, type = endpoint.type, data,
+            params = {}, type = endpoint.type, payload,
             contentType = endpoint.contentType,
             include = (endpoint.include || []) } = options;
     let queryString = [];
@@ -134,28 +136,28 @@ export default class Api {
     // or a json string.
     let body;
     if( method != 'GET' ) {
-      if( data !== undefined ) {
+      if( payload !== undefined ) {
         if( type == 'form' ) {
           body = new FormData();
-          for( let k in data )
-            body.append( k, data[k] );
+          for( let k in payload )
+            body.append( k, payload[k] );
         }
         else {
-          body = data || {};
+          body = payload || {};
           body = JSON.stringify( body );
         }
       }
     }
     else {
-      if( data !== undefined ) {
-        for( const k in data )
-          queryString.push( k + '=' + encodeURIComponent( data[k] ) );
+      if( payload !== undefined ) {
+        for( const k in payload )
+          queryString.push( k + '=' + encodeURIComponent( payload[k] ) );
       }
     }
 
     // Replace any URL arguments. This is typically just hte ID of
     // an object.
-    let finalPath = supplant( path, args );
+    let finalPath = supplant( path, params );
 
     // Do we have any included models?
     if( include && include.length )
@@ -165,9 +167,16 @@ export default class Api {
     if( queryString.length > 0 )
       finalPath += '?' + queryString.join( '&' );
 
-    console.debug( `API ${method} ${type}: ${finalPath}`, data );
+    console.debug( `API ${method} ${type}: ${finalPath}`, payload );
     return ajax( finalPath, body, method, type, contentType );
   }
 }
 
-export { csrfSettings, ApiError };
+// Create a default api.
+api = new Api();
+
+// Stash on the browser for easy access.
+if( window )
+  window.api = api;
+
+export {postJson, csrfSettings, ApiError};
