@@ -173,7 +173,7 @@ export default class Api {
 }
 
 // Create a default api.
-api = new Api();
+let api = new Api();
 
 // Stash on the browser for easy access.
 if( window )
