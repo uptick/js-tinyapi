@@ -43,12 +43,16 @@ function fetchHeaders( opts ) {
 }
 
 export function ajax( url, body, method, dataType, contentType ) {
-  let request = new Request( url, {
+  let requestInit = {
     method,
     headers: fetchHeaders( {method, dataType, contentType} ),
-    credentials: 'same-origin',
-    body: body 
-  });
+    credentials: 'same-origin'
+  };
+  console.log( method );
+  if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' )
+    requestInit.body = body
+  console.log( requestInit );
+  let request = new Request( url, requestInit );
   return fetch( request )
     .then( response => {
       if( response.ok ) {
