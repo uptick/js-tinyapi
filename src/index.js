@@ -179,4 +179,4 @@ let api = new Api();
 if( window )
   window.api = api;
 
-export {ajax, postJson, csrfSettings, ApiError};
+export {api, ajax, postJson, csrfSettings, ApiError};
