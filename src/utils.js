@@ -48,10 +48,8 @@ export function ajax( url, body, method, dataType, contentType ) {
     headers: fetchHeaders( {method, dataType, contentType} ),
     credentials: 'same-origin'
   };
-  console.log( method );
   if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' )
     requestInit.body = body
-  console.log( requestInit );
   let request = new Request( url, requestInit );
   return fetch( request )
     .then( response => {
