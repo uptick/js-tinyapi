@@ -1,6 +1,6 @@
 import {
   postJson, csrfSettings, ApiError, ajax, capitalize, supplant
-} from './utils';
+} from './utils'
 
 /**
  * Describes an API.
@@ -11,10 +11,10 @@ export default class Api {
    * Constructs an Api instance. Accepts an endpoint tree.
    */
   constructor( endpoints = {} ) {
-    this.merge = ::this.merge;
-    this.request = ::this.request;
-    this.crud = {};
-    this.merge( endpoints );
+    this.merge = ::this.merge
+    this.request = ::this.request
+    this.crud = {}
+    this.merge( endpoints )
   }
 
   /**
@@ -28,17 +28,17 @@ export default class Api {
       path: path + ((path[path.length - 1] == '/') ? '' : '/'),
       method: method,
       ...options
-    };
+    }
 
     // If we were given a function to call, bind it appropriately.
     // Otherwise just use the standard request.
-    let request = opts => this.request( ctx, opts );
-    const { handler } = options;
+    let request = opts => this.request( ctx, opts )
+    const { handler } = options
     if( handler !== undefined )
-      this[name] = (...args) => handler( request, ...args );
+      this[name] = (...args) => handler( request, ...args )
     else
-      this[name] = request;
-    return this[name];
+      this[name] = request
+    return this[name]
   }
 
   /**
@@ -46,29 +46,29 @@ export default class Api {
    */
   merge( endpoints, path = '' ) {
     for( const key of Object.keys( endpoints ) ) {
-      let ep = endpoints[key];
+      let ep = endpoints[key]
 
       // Check if we're looking at an endpoint.
-      let match = /^(GET|POST|PUT|PATCH|DELETE|CRUD)$/.exec( key );
+      let match = /^(GET|POST|PUT|PATCH|DELETE|CRUD)$/.exec( key )
       if( match ) {
 
         // If we matched a CRUD endpoint, perform the setup.
         if( match[1] == 'CRUD' ) {
-          const ii = path.lastIndexOf( '/' ) + 1;
-          let crudKey = path.slice( ii );
-          let crudPath = path.slice( 0, ii );
-          this.makeCrudEndpoints( crudKey, crudPath );
+          const ii = path.lastIndexOf( '/' ) + 1
+          let crudKey = path.slice( ii )
+          let crudPath = path.slice( 0, ii )
+          this.makeCrudEndpoints( crudKey, crudPath )
         }
 
         // The endpoint can be just the name of the function
         // or it can be an object of details.
         else {
           if( !(ep instanceof Object) )
-            ep = { name: ep };
-          const {name, options={}} = ep;
+            ep = { name: ep }
+          const {name, options={}} = ep
 
           // Make the endpoint.
-          this.makeEndpoint( name, path + '/', match[1], options );
+          this.makeEndpoint( name, path + '/', match[1], options )
         }
       }
 
@@ -83,43 +83,43 @@ export default class Api {
   }
 
   makeCrudEndpoints( key, path ) {
-    let ep = [key.slice( 0, -1 ), key];
-    const joiner = ((path[path.length - 1] == '/') ? '' : '/');
-    const basePath = path + joiner + ep[1];
-    const baseName = capitalize( ep[0] );
-    const baseNamePlural = capitalize( ep[1] );
-    this.crud[ep[0]] = {
-      list: this.makeEndpoint( 'list' + baseNamePlural, basePath, 'GET' ),
-      create: this.makeEndpoint( 'create' + baseName, basePath, 'POST', {
+    /* let ep = [key.slice( 0, -1 ), key]*/
+    const joiner = ((path[path.length - 1] == '/') ? '' : '/')
+    const basePath = path + joiner + key // ep[1]
+    /* const baseName = capitalize( ep[0] )
+     * const baseNamePlural = capitalize( ep[1] )*/
+    this.crud[key] = {
+      list: this.makeEndpoint( key + 'List', basePath, 'GET' ),
+      create: this.makeEndpoint( key + 'Create', basePath, 'POST', {
         handler: (req, payload, opts = {}) => req({
           ...opts,
           payload
         })
       }),
-      detail: this.makeEndpoint( 'get' + baseName, basePath + '/{id}', 'GET', {
+      detail: this.makeEndpoint( key + 'Get', basePath + '/{id}', 'GET', {
         handler: (req, id, opts = {}) => {
           return req({
             ...opts,
             params: {id}
-          });
+          })
         }
       }),
-      update: this.makeEndpoint( 'update' + baseName, basePath + '/{id}', 'PATCH', {
+      update: this.makeEndpoint( key + 'Update', basePath + '/{id}', 'PATCH', {
         handler: (req, id, payload, opts = {}) => {
           return req({
             ...opts,
             params: {id},
             payload
-          });
+          })
         }
       }),
-      remove: this.makeEndpoint( 'remove' + baseName, basePath + '/{id}', 'DELETE', {
+      remove: this.makeEndpoint( key + 'Remove', basePath + '/{id}', 'DELETE', {
         handler: (req, id, opts = {}) => req({
           ...opts,
           params: {id}
         })
       })
-    };
+    }
   }
 
   /**
@@ -129,54 +129,47 @@ export default class Api {
     const { method = endpoint.method, path = endpoint.path,
             params = {}, type = endpoint.type, payload,
             contentType = endpoint.contentType,
-            include = (endpoint.include || []) } = options;
-    let queryString = [];
+            include = (endpoint.include || []) } = options
+    let queryString = []
 
     // Process the body. This can end up being a FormData object
     // or a json string.
-    let body;
+    let body
     if( method != 'GET' ) {
       if( payload !== undefined ) {
         if( type == 'form' ) {
-          body = new FormData();
+          body = new FormData()
           for( let k in payload )
-            body.append( k, payload[k] );
+            body.append( k, payload[k] )
         }
         else {
-          body = payload || {};
-          body = JSON.stringify( body );
+          body = payload || {}
+          body = JSON.stringify( body )
         }
       }
     }
     else {
       if( payload !== undefined ) {
         for( const k in payload )
-          queryString.push( k + '=' + encodeURIComponent( payload[k] ) );
+          queryString.push( k + '=' + encodeURIComponent( payload[k] ) )
       }
     }
 
     // Replace any URL arguments. This is typically just hte ID of
     // an object.
-    let finalPath = supplant( path, params );
+    let finalPath = supplant( path, params )
 
     // Do we have any included models?
     if( include && include.length )
-      queryString.push( 'include=' + include.join( ',' ) );
+      queryString.push( 'include=' + include.join( ',' ) )
 
     // Complete the path with the query string.
     if( queryString.length > 0 )
-      finalPath += '?' + queryString.join( '&' );
+      finalPath += '?' + queryString.join( '&' )
 
-    console.debug( `API ${method} ${type}: ${finalPath}`, payload );
-    return ajax( finalPath, body, method, type, contentType );
+    console.debug( `API ${method} ${type}: ${finalPath}`, payload )
+    return ajax( finalPath, body, method, type, contentType )
   }
 }
 
-// Create a default api.
-let api = new Api();
-
-// Stash on the browser for easy access.
-if( window )
-  window.api = api;
-
-export {api, ajax, postJson, csrfSettings, ApiError};
+export {ajax, postJson, csrfSettings, ApiError}
