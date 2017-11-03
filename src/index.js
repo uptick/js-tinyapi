@@ -45,6 +45,8 @@ export default class Api {
    * Merge an endpoint tree.
    */
   merge( endpoints, path = '' ) {
+    if( !endpoints )
+      throw new Error( 'invalid endpoint data given to Api.merge' )
     for( const key of Object.keys( endpoints ) ) {
       let ep = endpoints[key]
 
