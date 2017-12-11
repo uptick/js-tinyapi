@@ -1,8 +1,8 @@
-import Cookies from 'js-cookie';
+import Cookies from 'js-cookie'
 
 export function ApiError( message ) {
-  this.message = message;
-  this.stack = (new Error()).stack;
+  this.message = message
+  this.stack = (new Error()).stack
 }
 ApiError.prototype = Object.create( Error.prototype );
 ApiError.prototype.name = 'ApiError';
@@ -31,15 +31,24 @@ var csrfSettings = {
 };
 
 function fetchHeaders( opts ) {
-  const {method = 'get', dataType, contentType='application/vnd.api+json'} = opts || {};
+  const {
+    method = 'get',
+    dataType,
+    contentType = 'application/vnd.api+json'
+  } = opts || {}
   let headers = new Headers({
     'X-Requested-With': 'XMLHttpRequest'
-  });
-  if( dataType == 'json' )
-    headers.set( 'Content-Type', contentType );
-  if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) )
-    headers.set( 'X-CSRFToken', csrfSettings.token );
-  return headers;
+  })
+  if( dataType == 'json' ) {
+    headers.set( 'Content-Type', contentType )
+  }
+  else if( dataType == 'form' ) {
+    headers.set( 'Content-Type', 'application/x-www-form-urlencoded' )
+  }
+  if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) ) {
+    headers.set( 'X-CSRFToken', csrfSettings.token )
+  }
+  return headers
 }
 
 export function ajax( url, body, method, dataType, contentType ) {
@@ -47,11 +56,13 @@ export function ajax( url, body, method, dataType, contentType ) {
     method,
     headers: fetchHeaders( {method, dataType, contentType} ),
     credentials: 'same-origin'
-  };
-  if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' )
+  }
+  if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' ) {
     requestInit.body = body
-  let request = new Request( url, requestInit );
-  return fetch( request )
+  }
+  let request = new Request( url, requestInit )
+      console.log( requestInit.body )
+  return fetch( url, request )
     .then( response => {
       if( response.ok ) {
         if( response.status != 204 )
@@ -76,10 +87,10 @@ function postJson( url, data, contentType ) {
  * Helper for posting form data.
  */
 function postForm( url, data, contentType ) {
-  let body = new FormData();
+  let body = new FormData()
   for( let k in data )
-    body.append( k, data[k] );
-  return ajax( url, body, 'post', contentType );
+    body.append( k, data[k] )
+  return ajax( url, body, 'post', contentType )
 }
 
 export {postJson, postForm, csrfSettings};

@@ -1,5 +1,10 @@
 import {
-  postJson, csrfSettings, ApiError, ajax, capitalize, supplant
+  postJson,
+  csrfSettings,
+  ApiError,
+  ajax,
+  capitalize,
+  supplant
 } from './utils'
 
 /**
@@ -146,9 +151,24 @@ export default class Api {
     if( method != 'GET' ) {
       if( payload !== undefined ) {
         if( type == 'form' ) {
-          body = new FormData()
-          for( let k in payload )
-            body.append( k, payload[k] )
+
+	  // There seems to be a problem with Node, fetch, and form-data. The FormData
+	  // object isn't converted to the appropriate querystring. Use an ugly work around
+	  // for testing purposes.
+          // TODO: Once form-data works again, remove this madness.
+	  if( typeof window === 'undefined' || (typeof global === 'object' && global.TINYAPI_WORKAROUND) ) {
+	      body = []
+	    for( let k in payload ) {
+		body.push( encodeURIComponent( k ) + '=' + encodeURIComponent( payload[k] ) )
+	    }
+	      body = body.join( '&' )
+	      console.log( '***: ', body )
+	  }
+	  else {
+  	  body = new FormData()
+	  for( let k in payload )
+	    body.append( k, payload[k] )
+		}
         }
         else {
           body = payload || {}
