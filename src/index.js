@@ -128,10 +128,16 @@ export default class Api {
    * Perform a request call.
    */
   request( endpoint, options = {} ) {
-    const { method = endpoint.method, path = endpoint.path,
-            params = {}, type = endpoint.type, payload,
-            contentType = endpoint.contentType,
-            include = (endpoint.include || []) } = options
+    const {
+      method = endpoint.method,
+      path = endpoint.path,
+      params = {},
+      type = endpoint.type,
+      payload,
+      contentType = endpoint.contentType,
+      include = (endpoint.include || []),
+    } = options
+    let { urlRoot } = options
     let queryString = []
 
     // Process the body. This can end up being a FormData object
@@ -168,6 +174,14 @@ export default class Api {
     // Complete the path with the query string.
     if( queryString.length > 0 )
       finalPath += '?' + queryString.join( '&' )
+
+    // If we've been given an URL root, add it in here. This is useful
+    // for writing Node tests.
+    if( urlRoot ) {
+      if( urlRoot[urlRoot.length - 1] == '/' )
+        urlRoot = urlRoot.substring( 0, urlRoot.length - 1 )
+      finalPath = urlRoot + finalPath
+    }
 
     console.debug( `API ${method} ${type}: ${finalPath}`, payload )
     return ajax( finalPath, body, method, type, contentType )
