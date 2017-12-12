@@ -31,7 +31,7 @@ var csrfSettings = {
 };
 
 function fetchHeaders( opts ) {
-  const {method = 'get', dataType, contentType='application/vnd.api+json'} = opts || {};
+  const {method = 'get', dataType, contentType='application/vnd.api+json', additionalHeaders} = opts || {};
   let headers = new Headers({
     'X-Requested-With': 'XMLHttpRequest'
   });
@@ -39,23 +39,29 @@ function fetchHeaders( opts ) {
     headers.set( 'Content-Type', contentType );
   if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) )
     headers.set( 'X-CSRFToken', csrfSettings.token );
+  for ( const k in additionalHeaders )
+    headers.set(k, additionalHeaders[k])
   return headers;
 }
 
-export function ajax( url, body, method, dataType, contentType ) {
+export function ajax( url, body, method, dataType, contentType, additionalHeaders ) {
   let requestInit = {
     method,
-    headers: fetchHeaders( {method, dataType, contentType} ),
+    headers: fetchHeaders( {method, dataType, contentType, additionalHeaders} ),
     credentials: 'same-origin'
   };
-  if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' )
+  if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' && method.toLowerCase() != 'options')
     requestInit.body = body
   let request = new Request( url, requestInit );
   return fetch( request )
     .then( response => {
       if( response.ok ) {
-        if( response.status != 204 )
-          return response.json();
+        if( response.status != 204 ) {
+          if (TINYAPI_NODE) {
+            return response
+          }
+          return response.json()
+        }
         else
           return {};
       }
@@ -69,7 +75,7 @@ export function ajax( url, body, method, dataType, contentType ) {
  * Helper for posting JSON data.
  */
 function postJson( url, data, contentType ) {
-  return ajax( url, JSON.stringify( data ), 'post', 'json', contentType );
+  return ajax( url, JSON.stringify( data ), 'post', 'json', contentType, {} );
 }
 
 /**
@@ -79,7 +85,7 @@ function postForm( url, data, contentType ) {
   let body = new FormData();
   for( let k in data )
     body.append( k, data[k] );
-  return ajax( url, body, 'post', contentType );
+  return ajax( url, body, 'post', contentType, {} );
 }
 
 export {postJson, postForm, csrfSettings};

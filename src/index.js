@@ -138,7 +138,7 @@ export default class Api {
       contentType = endpoint.contentType,
       include = (endpoint.include || []),
     } = options
-    let { urlRoot } = options
+    let { urlRoot, additionalHeaders = {} } = options
     let queryString = []
 
     // Process the body. This can end up being a FormData object
@@ -185,7 +185,7 @@ export default class Api {
     }
 
     console.debug( `API ${method} ${type}: ${finalPath}`, payload )
-    return ajax( finalPath, body, method, type, contentType )
+    return ajax( finalPath, body, method, type, contentType, additionalHeaders )
   }
 }
 
