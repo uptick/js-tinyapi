@@ -120,7 +120,8 @@ export default class Api {
           ...opts,
           params: {id}
         })
-      })
+      }),
+      options: this.makeEndpoint(key + 'Options', basePath, 'OPTIONS'),
     }
   }
 
@@ -143,7 +144,7 @@ export default class Api {
     // Process the body. This can end up being a FormData object
     // or a json string.
     let body
-    if( method != 'GET' ) {
+    if( method != 'GET' && method != 'OPTIONS' ) {
       if( payload !== undefined ) {
         if( type == 'form' ) {
           body = new FormData()
