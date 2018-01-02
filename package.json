@@ -1,10 +1,10 @@
 {
   "name": "js-tinyapi",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A simple and lightweight API helper.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/furious-luke/js-tinyapi.git"
+    "url": "https://github.com/ABASystems/js-tinyapi.git"
   },
   "main": "lib/index.js",
   "scripts": {
