@@ -57,7 +57,7 @@ export function ajax( url, body, method, dataType, contentType, additionalHeader
     .then( response => {
       if( response.ok ) {
         if( response.status != 204 ) {
-          if (TINYAPI_NODE) {
+          if (typeof TINYAPI_NODE !== 'undefined' && TINYAPI_NODE) {
             return response
           }
           return response.json()
