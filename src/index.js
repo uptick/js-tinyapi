@@ -1,5 +1,5 @@
 import {
-  postJson, csrfSettings, ApiError, ajax, capitalize, supplant
+  postJson, ajaxSettings, ApiError, ajax, capitalize, supplant
 } from './utils'
 
 /**
@@ -189,4 +189,4 @@ export default class Api {
   }
 }
 
-export {ajax, postJson, csrfSettings, ApiError}
+export {ajax, postJson, ajaxSettings, ApiError}

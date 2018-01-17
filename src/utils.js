@@ -26,8 +26,9 @@ export function capitalize( name ) {
 /**
  * Global storage for current csrf settings.
  */
-var csrfSettings = {
-  token: Cookies.get( 'csrftoken' ) || 'NO-CSRF-TOKEN'
+var ajaxSettings = {
+  csrf: Cookies.get( 'csrftoken' ) || 'NO-CSRF-TOKEN',
+  bearer: null
 };
 
 function fetchHeaders( opts ) {
@@ -38,7 +39,10 @@ function fetchHeaders( opts ) {
   if( dataType == 'json' )
     headers.set( 'Content-Type', contentType );
   if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) )
-    headers.set( 'X-CSRFToken', csrfSettings.token );
+    headers.set( 'X-CSRFToken', ajaxSettings.token );
+  if( ajaxSettings.bearer ) {
+    headers.set( 'Authorization', 'Bearer ' + ajaxSettings.bearer )
+  }
   for ( const k in additionalHeaders )
     headers.set(k, additionalHeaders[k])
   return headers;
@@ -88,4 +92,4 @@ function postForm( url, data, contentType ) {
   return ajax( url, body, 'post', contentType, {} );
 }
 
-export {postJson, postForm, csrfSettings};
+export {postJson, postForm, ajaxSettings}
