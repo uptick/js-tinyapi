@@ -1,5 +1,5 @@
 import {
-  postJson, ajaxSettings, ApiError, ajax, capitalize, supplant
+  postJson, postForm, ajaxSettings, ApiError, ajax, capitalize, supplant
 } from './utils'
 
 /**
@@ -137,6 +137,8 @@ export default class Api {
       payload,
       contentType = endpoint.contentType,
       include = (endpoint.include || []),
+      filter = (endpoint.filter || {}),
+      sort = (endpoint.sort || [])
     } = options
     let { urlRoot, additionalHeaders = {} } = options
     let queryString = []
@@ -169,8 +171,21 @@ export default class Api {
     let finalPath = supplant( path, params )
 
     // Do we have any included models?
-    if( include && include.length )
+    if( include && include.length ) {
       queryString.push( 'include=' + include.join( ',' ) )
+    }
+
+    // Do we have any orderings?
+    if( sort && sort.length ) {
+      queryString.push( 'sort=' + sort.join(',') )
+    }
+
+    // Include filters.
+    if( filter && Object.keys(filter).length ) {
+      for( const k of Object.keys(filter) ) {
+        queryString.push( `filter[${k}]=${filter[k]}` )
+      }
+    }
 
     // Complete the path with the query string.
     if( queryString.length > 0 )
@@ -185,8 +200,8 @@ export default class Api {
     }
 
     console.debug( `API ${method} ${type}: ${finalPath}`, payload )
-    return ajax( finalPath, body, method, type, contentType, additionalHeaders )
+    return ajax( finalPath, body, method, type, contentType, additionalHeaders, true )
   }
 }
 
-export {ajax, postJson, ajaxSettings, ApiError}
+export {ajax, postJson, postForm, ajaxSettings, ApiError}

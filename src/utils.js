@@ -32,15 +32,22 @@ var ajaxSettings = {
 };
 
 function fetchHeaders( opts ) {
-  const {method = 'get', dataType, contentType='application/vnd.api+json', additionalHeaders} = opts || {};
+  const {
+    method = 'get',
+    dataType,
+    contentType='application/vnd.api+json',
+    additionalHeaders,
+    useBearer = true
+  } = opts || {};
   let headers = new Headers({
     'X-Requested-With': 'XMLHttpRequest'
   });
+  // TODO: What is going on here??
   if( dataType == 'json' )
     headers.set( 'Content-Type', contentType );
   if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) )
     headers.set( 'X-CSRFToken', ajaxSettings.token );
-  if( ajaxSettings.bearer ) {
+  if( useBearer && ajaxSettings.bearer ) {
     headers.set( 'Authorization', 'Bearer ' + ajaxSettings.bearer )
   }
   for ( const k in additionalHeaders )
@@ -48,10 +55,10 @@ function fetchHeaders( opts ) {
   return headers;
 }
 
-export function ajax( url, body, method, dataType, contentType, additionalHeaders ) {
+export function ajax( url, body, method, dataType, contentType, additionalHeaders, useBearer ) {
   let requestInit = {
     method,
-    headers: fetchHeaders( {method, dataType, contentType, additionalHeaders} ),
+    headers: fetchHeaders({ method, dataType, contentType, additionalHeaders, useBearer }),
     credentials: 'same-origin'
   };
   if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' && method.toLowerCase() != 'options')
@@ -85,11 +92,11 @@ function postJson( url, data, contentType ) {
 /**
  * Helper for posting form data.
  */
-function postForm( url, data, contentType ) {
+function postForm({ url, payload, dataType, useBearer = true }) {
   let body = new FormData();
-  for( let k in data )
-    body.append( k, data[k] );
-  return ajax( url, body, 'post', contentType, {} );
+  for( let k in payload )
+    body.append( k, payload[k] );
+  return ajax( url, body, 'post', dataType, undefined, {}, useBearer );
 }
 
 export {postJson, postForm, ajaxSettings}
