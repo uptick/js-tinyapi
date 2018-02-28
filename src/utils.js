@@ -157,18 +157,28 @@ function ajax( opts ) {
   let request = new Request( url, requestInit )
   return fetch( request )
     .then( response => {
-      if( response.ok ) {
+      if( !!response.ok ) {
         if( response.status == 204 ) {
           return {}
         }
         if( typeof TINYAPI_NODE !== 'undefined' && TINYAPI_NODE ) {
           return response
         }
-        return response.json()
+        if( !!response.json ) {
+          return response.json()
+        }
+        else {
+          return response
+        }
       }
-      return response.json()
-                     .catch( e => Object({ status: response.status }) )
-                     .then( e => Promise.reject( e ) )
+      if( !!response.json ) {
+        return response.json()
+                       .catch( e => Object({ status: response.status }) )
+                       .then( e => Promise.reject( e ) )
+      }
+      else {
+        return response
+      }
     })
 }
 

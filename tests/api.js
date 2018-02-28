@@ -121,28 +121,29 @@ describe( 'Given multiple methods in an Api', () => {
   })
 
   beforeEach(() => {
-    sinon.stub( utils, 'ajax' )
+    sinon.stub( global, 'fetch' )
+    fetch.onCall( 0 ).resolves({})
   })
 
   afterEach(() => {
-    utils.ajax.restore()
+    fetch.restore()
   })
 
   describe( 'calling the endpoint', () => {
 
     it( 'should use the GET method', () => {
       api.a()
-      expect( utils.ajax.args[0][0].method ).to.equal( 'get' )
+      expect( fetch.args[0][0].method ).to.equal( 'get' )
     })
 
     it( 'should use the POST method', () => {
       api.b()
-      expect( utils.ajax.args[0][0].method ).to.equal( 'post' )
+      expect( fetch.args[0][0].method ).to.equal( 'post' )
     })
 
     it( 'should use the PATCH method', () => {
       api.c()
-      expect( utils.ajax.args[0][0].method ).to.equal( 'patch' )
+      expect( fetch.args[0][0].method ).to.equal( 'patch' )
     })
 
   })
@@ -159,18 +160,19 @@ describe( 'Given a JSON-API endpoint', () => {
   })
 
   beforeEach(() => {
-    sinon.stub( utils, 'ajax' )
+    sinon.stub( global, 'fetch' )
+    fetch.onCall( 0 ).resolves({})
   })
 
   afterEach(() => {
-    utils.ajax.restore()
+    fetch.restore()
   })
 
   describe( 'supplying includes', () => {
 
     it( 'should alter the query string', () => {
       api.a({ include: ['b', 'c'] })
-      expect( utils.ajax.args[0][0].url ).to.equal( '/A/?include=b,c' )
+      expect( fetch.args[0][0].path ).to.equal( '/A/?include=b,c' )
     })
 
   })
@@ -184,7 +186,7 @@ describe( 'Given a JSON-API endpoint', () => {
           c: 20
         }
       })
-      expect( utils.ajax.args[0][0].url ).to.equal( '/A/?filter[b]=10&filter[c]=20' )
+      expect( fetch.args[0][0].path ).to.equal( '/A/?filter[b]=10&filter[c]=20' )
     })
 
   })
@@ -193,7 +195,7 @@ describe( 'Given a JSON-API endpoint', () => {
 
     it( 'should alter the query string', () => {
       api.a({ sort: ['b', 'c'] })
-      expect( utils.ajax.args[0][0].url ).to.equal( '/A/?sort=b,c' )
+      expect( fetch.args[0][0].path ).to.equal( '/A/?sort=b,c' )
     })
 
   })
@@ -209,7 +211,7 @@ describe( 'Given a JSON-API endpoint', () => {
         },
         sort: ['b', 'c']
       })
-      expect( utils.ajax.args[0][0].url ).to.equal( '/A/?include=b,c&filter[b]=10&filter[c]=20&sort=b,c' )
+      expect( fetch.args[0][0].path ).to.equal( '/A/?include=b,c&filter[b]=10&filter[c]=20&sort=b,c' )
     })
 
   })
@@ -224,7 +226,7 @@ describe( 'Given a JSON-API endpoint', () => {
         },
         include: ['b', 'c']
       })
-      expect( utils.ajax.args[0][0].url ).to.equal( '/A/?d=y&e=z&include=b,c' )
+      expect( fetch.args[0][0].path ).to.equal( '/A/?d=y&e=z&include=b,c' )
     })
 
   })
@@ -244,11 +246,12 @@ describe( 'Given a form POST endpoint', () => {
   })
 
   beforeEach(() => {
-    sinon.stub( utils, 'ajax' )
+    sinon.stub( global, 'fetch' )
+    fetch.onCall( 0 ).resolves({})
   })
 
   afterEach(() => {
-    utils.ajax.restore()
+    fetch.restore()
   })
 
   describe( 'supplying a payload', () => {
@@ -260,7 +263,7 @@ describe( 'Given a form POST endpoint', () => {
           'c': 20
         }
       })
-      expect( utils.ajax.args[0][0].body ).to.be.an.instanceof( FormData )
+      expect( fetch.args[0][0].body ).to.be.an.instanceof( FormData )
     })
 
     describe( 'and a json type', () => {
@@ -273,7 +276,7 @@ describe( 'Given a form POST endpoint', () => {
             'c': 20
           }
         })
-        expect( utils.ajax.args[0][0].body ).to.be.a.string()
+        expect( fetch.args[0][0].body ).to.be.a.string()
       })
 
     })
@@ -288,7 +291,7 @@ describe( 'Given a form POST endpoint', () => {
             'c': 20
           }
         })
-        expect( utils.ajax.args[0][0].body ).to.be.a.string()
+        expect( fetch.args[0][0].body ).to.be.a.string()
       })
 
     })
@@ -303,7 +306,7 @@ describe( 'Given a form POST endpoint', () => {
             'c': 20
           }
         })
-        expect( utils.ajax.args[0][0].body ).to.be.an.instanceof( FormData )
+        expect( fetch.args[0][0].body ).to.be.an.instanceof( FormData )
       })
 
     })
