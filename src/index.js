@@ -12,6 +12,7 @@ import {
   matchContentType,
   makeFormData
 } from './utils'
+import { Middleware } from './middleware'
 import { ApiError } from './errors'
 
 /**
@@ -272,5 +273,6 @@ export {
   postJson,
   postForm,
   ajaxSettings,
+  Middleware,
   ApiError
 }
