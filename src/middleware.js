@@ -1,5 +1,14 @@
 import { ajax } from './utils'
 
+/**
+ * Base class for middleware.
+ *
+ * Middleware allows custom operations to be injected into the flow
+ * of making a request. They can either modify the request details,
+ * alter how the request is made, or modify the response. There may
+ * be at most one middleware that returns a promise, all others must
+ * return an object.
+ */
 export default class Middleware {
 
   /**
