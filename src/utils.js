@@ -1,13 +1,39 @@
 import Cookies from 'js-cookie'
 
-import ApiError from './errors'
+import { ApiError } from './errors'
 
 /**
  * Make it a little easier to use content types.
  */
 const contentTypes = {
+  form: 'application/x-www-form-urlencoded',
+  multiForm: 'multipart/form-data',
   json: 'application/json',
   jsonApi: 'application/vnd.api+json'
+}
+
+/**
+ *
+ */
+function debug() {
+  if( console.debug ) {
+    console.debug.apply( null, arguments )
+  }
+} 
+
+function matchContentType( src, id ) {
+  if( !src ) {
+    return false
+  }
+  let ii = src.indexOf( ';' )
+  if( ii >= 0 ) {
+    src = src.substring( 0, ii )
+  }
+  return src.toLowerCase() == contentTypes[id]
+}
+
+function addTrailingSlash( path ) {
+  return path + ((path[path.length - 1] == '/') ? '' : '/')
 }
 
 /**
@@ -165,6 +191,17 @@ function postJson({ url, payload, contentType, useBearer }) {
 }
 
 /**
+ * Convert an object into HTML5 FormData.
+ */
+function makeFormData( payload ) {
+  let body = new FormData()
+  for( let k in (payload || {}) ) {
+    body.append( k, payload[k] )
+  }
+  return body
+}
+
+/**
  * Post form data.
  *
  * @param {string} url - The URL to make the request to.
@@ -172,21 +209,22 @@ function postJson({ url, payload, contentType, useBearer }) {
  * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
  */
 function postForm({ url, payload, useBearer }) {
-  let body = new FormData()
-  for( let k in payload ) {
-    body.append( k, payload[k] )
-  }
   return ajax({
     url,
-    body,
+    body: makeFormData( payload ),
     method: 'post',
     useBearer
   })
 }
 
 export {
+  debug,
+  addTrailingSlash,
   ajax,
   postJson,
   postForm,
-  ajaxSettings
+  ajaxSettings,
+  contentTypes,
+  matchContentType,
+  makeFormData
 }

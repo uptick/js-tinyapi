@@ -1,6 +1,18 @@
+import { jsonApiQuery } from './jsonapi'
 import {
-  postJson, postForm, ajaxSettings, ApiError, ajax, capitalize, supplant
+  debug,
+  ajax,
+  contentTypes,
+  postJson,
+  postForm,
+  ajaxSettings,
+  capitalize,
+  supplant,
+  addTrailingSlash,
+  matchContentType,
+  makeFormData
 } from './utils'
+import { ApiError } from './errors'
 
 /**
  * Describes an API.
@@ -12,39 +24,18 @@ export default class Api {
    */
   constructor( endpoints = {} ) {
     this.crud = {}
+    this.middlewares = []
     this.merge( endpoints )
-  }
-
-  /**
-   * Constructs an endpoint call function and sets it.
-   */
-  makeEndpoint( name, path, method, options = {} ) {
-
-    // Prepare the context to be passed to the request method.
-    let ctx = {
-      type: 'json',
-      path: path + ((path[path.length - 1] == '/') ? '' : '/'),
-      method: method,
-      ...options
-    }
-
-    // If we were given a function to call, bind it appropriately.
-    // Otherwise just use the standard request.
-    let request = opts => this.request( ctx, opts )
-    const { handler } = options
-    if( handler !== undefined )
-      this[name] = (...args) => handler( request, ...args )
-    else
-      this[name] = request
-    return this[name]
   }
 
   /**
    * Merge an endpoint tree.
    */
   merge = ( endpoints, path = '' ) => {
-    if( !endpoints )
-      throw new Error( 'invalid endpoint data given to Api.merge' )
+    if( !endpoints ) {
+      throw new Error( 'Empty endpoint data given to Api.merge.' )
+    }
+
     for( const key of Object.keys( endpoints ) ) {
       let ep = endpoints[key]
 
@@ -63,9 +54,10 @@ export default class Api {
         // The endpoint can be just the name of the function
         // or it can be an object of details.
         else {
-          if( !(ep instanceof Object) )
+          if( !(ep instanceof Object) ) {
             ep = { name: ep }
-          const {name, options={}} = ep
+          }
+          const { name, options = {} } = ep
 
           // Make the endpoint.
           this.makeEndpoint( name, path + '/', match[1], options )
@@ -73,21 +65,68 @@ export default class Api {
       }
 
       // If not an endpoint, check for a CRUD shorthand.
-      else if( ep == 'CRUD' )
+      else if( ep == 'CRUD' ) {
         this.makeCrudEndpoints( key, path )
+      }
 
       // If not an endpoint or CRUD, continue down the tree.
-      else
+      else {
         this.merge( ep, path + '/' + key )
+      }
     }
   }
 
+  /**
+   * Constructs an endpoint call function and sets it on the object.
+   *
+   * @param {string} name - The name of the endpoint function.
+   * @param {string} path - The URL path to use.
+   * @param {string} method - The method to use for this call.
+   * @param {func} handler - A custom handler to call.
+   */
+  makeEndpoint = ( name, path, method, opts = {} ) => {
+
+    // Fail loudly if we're overriding names.
+    if( this[name] !== undefined ) {
+      throw new Error( `Duplicate name in Api: ${name}` )
+    }
+
+    // Prepare the context to be passed to the request method. This
+    // will be passed to the each invocation of the endpoint call
+    // as a set of defaults.
+    let ctx = {
+      ...opts,
+      path: addTrailingSlash( path ),
+      method
+    }
+
+    // If we were given a function to call, bind it appropriately.
+    // Otherwise just use the standard request.
+    let request = opts => this.request( ctx, opts )
+    const { handler } = opts
+    if( handler !== undefined ) {
+
+      // The first argument to the handler will be a function to call
+      // the builtin handler. This allows the handler to easily finalise
+      // the call after modifying any options.
+      let wrapper = ( ...args ) => handler( request, ...args )
+      wrapper.context = ctx
+      this[name] = wrapper
+    }
+    else {
+      request.context = ctx
+      this[name] = request
+    }
+
+    return this[name]
+  }
+
+  /**
+   * Automatically create a set of CRUD endpoint functions.
+   */
   makeCrudEndpoints( key, path ) {
-    /* let ep = [key.slice( 0, -1 ), key]*/
     const joiner = ((path[path.length - 1] == '/') ? '' : '/')
-    const basePath = path + joiner + key // ep[1]
-    /* const baseName = capitalize( ep[0] )
-     * const baseNamePlural = capitalize( ep[1] )*/
+    const basePath = path + joiner + key
     this.crud[key] = {
       list: this.makeEndpoint( key + 'List', basePath, 'GET' ),
       create: this.makeEndpoint( key + 'Create', basePath, 'POST', {
@@ -128,78 +167,110 @@ export default class Api {
    */
   request( endpoint, options = {} ) {
     const {
-      method = endpoint.method,
+      method = (endpoint.method || '').toLowerCase(),
       path = endpoint.path,
       params = {},
-      type = endpoint.type,
       payload,
-      contentType = endpoint.contentType,
+      type = endpoint.type,
+      extraHeaders = {},
       include = (endpoint.include || []),
       filter = (endpoint.filter || {}),
       sort = (endpoint.sort || [])
     } = options
-    let { urlRoot, additionalHeaders = {} } = options
-    let queryString = []
+    let {
+      urlRoot,
+      contentType = endpoint.contentType,
+    } = options
+
+    // "type" is used a convenient shorthand for the content type.
+    // "contentType" still trumps it.
+    if( !!type && !contentType ) {
+      contentType = contentTypes[type]
+    }
 
     // Process the body. This can end up being a FormData object
     // or a json string.
     let body
-    if( method != 'GET' && method != 'OPTIONS' ) {
+    let queryString = []
+    if( method != 'get' && method != 'options' ) {
       if( payload !== undefined ) {
-        if( type == 'form' ) {
-          body = new FormData()
-          for( let k in payload )
-            body.append( k, payload[k] )
+        if( matchContentType( contentType, 'form' ) ) {
+          body = makeFormData( payload )
         }
         else {
-          body = payload || {}
-          body = JSON.stringify( body )
+          body = JSON.stringify( (payload || {}) )
         }
       }
     }
     else {
       if( payload !== undefined ) {
-        for( const k in payload )
+        for( const k in payload ) {
           queryString.push( k + '=' + encodeURIComponent( payload[k] ) )
+        }
       }
     }
 
-    // Replace any URL arguments. This is typically just hte ID of
+    // Replace any URL arguments. This is typically just the ID of
     // an object.
     let finalPath = supplant( path, params )
 
-    // Do we have any included models?
-    if( include && include.length ) {
-      queryString.push( 'include=' + include.join( ',' ) )
-    }
-
-    // Do we have any orderings?
-    if( sort && sort.length ) {
-      queryString.push( 'sort=' + sort.join(',') )
-    }
-
-    // Include filters.
-    if( filter && Object.keys(filter).length ) {
-      for( const k of Object.keys(filter) ) {
-        queryString.push( `filter[${k}]=${filter[k]}` )
-      }
-    }
-
-    // Complete the path with the query string.
-    if( queryString.length > 0 )
-      finalPath += '?' + queryString.join( '&' )
+    // Add any JSONAPI query strings.
+    finalPath += jsonApiQuery({ initial: queryString, include, filter, sort })
 
     // If we've been given an URL root, add it in here. This is useful
     // for writing Node tests.
     if( urlRoot ) {
-      if( urlRoot[urlRoot.length - 1] == '/' )
+      if( urlRoot[urlRoot.length - 1] == '/' ) {
         urlRoot = urlRoot.substring( 0, urlRoot.length - 1 )
+      }
       finalPath = urlRoot + finalPath
     }
 
-    console.debug( `API ${method} ${type}: ${finalPath}`, payload )
-    return ajax( finalPath, body, method, type, contentType, additionalHeaders, true )
+    // Prepare the request object. This is passed to either "ajax"
+    // or the middlewares.
+    let req = {
+      url: finalPath,
+      method,
+      body,
+      contentType,
+      extraHeaders
+    }
+
+    // If there are no middlewares, we are free to fulfill the request
+    // now.
+    if( !this.middlewares.length ) {
+      debug( `API ${method} ${type}: ${finalPath}`, payload )
+      return ajax( req )
+    }
+
+    // Otherwise, we need to pipe through all the middleware. This works
+    // by iterating over middleware in order until one returns a promise.
+    // We then chain the remaining middleware after that promise. It's the
+    // user's responsibility to ensure only one middleware wants to return
+    // a promise.
+    else {
+      let ii = 0
+      let obj = this.middlewares[ii++].process( req )
+      for( ; ii < this.middlewares.length; ++ii ) {
+        if( Promise.resolve( obj ) == obj ) {
+          for( ; ii < this.middlewares.length; ++ii ) {
+            let mw = this.middlewares[ii]
+            obj = obj.then( r => mw.process( r ) )
+          }
+        }
+        else {
+          obj = this.middlewares[ii].process( obj )
+        }
+      }
+      return obj
+    }
   }
 }
 
-export {ajax, postJson, postForm, ajaxSettings, ApiError}
+export {
+  ajax,
+  postJson,
+  postForm,
+  ajaxSettings,
+  ApiError
+}
