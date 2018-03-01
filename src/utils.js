@@ -117,6 +117,32 @@ function fetchHeaders( opts ) {
   return headers
 }
 
+function makeRequest( opts ) {
+  const method = (opts.method || 'get').toLowerCase()
+  const {
+    url,
+    body,
+    contentType,
+    extraHeaders,
+    useBearer = true
+  } = opts || {}
+  let request = {
+    url,
+    method,
+    headers: fetchHeaders({
+      method,
+      contentType,
+      extraHeaders,
+      useBearer
+    }),
+    credentials: 'same-origin'
+  }
+  if( method != 'get' && method != 'head' && method != 'options') {
+    request.body = body
+  }
+  return request
+}
+
 /**
  * Perform an ajax request.
  *
@@ -154,6 +180,39 @@ function ajax( opts ) {
     requestInit.body = body
   }
 
+  let request = new Request( url, requestInit )
+  return fetch( request )
+    .then( response => {
+      if( !!response.ok ) {
+        if( response.status == 204 ) {
+          return {}
+        }
+        if( typeof TINYAPI_NODE !== 'undefined' && TINYAPI_NODE ) {
+          return response
+        }
+        if( !!response.json ) {
+          return response.json()
+        }
+        else {
+          return response
+        }
+      }
+      if( !!response.json ) {
+        return response.json()
+                       .catch( e => Object({ status: response.status }) )
+                       .then( e => Promise.reject( e ) )
+      }
+      else {
+        return response 
+      }
+    })
+}
+
+function ajaxWithRequest( opts ) {
+  const {
+    url,
+    ...requestInit
+  } = opts
   let request = new Request( url, requestInit )
   return fetch( request )
     .then( response => {
@@ -236,5 +295,8 @@ export {
   ajaxSettings,
   contentTypes,
   matchContentType,
-  makeFormData
+  makeFormData,
+  makeRequest,
+  ajaxWithRequest,
+  fetchHeaders
 }

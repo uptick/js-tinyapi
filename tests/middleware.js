@@ -86,12 +86,12 @@ describe( 'Given an Api with a post and a middleware chain', () => {
   ])
 
   beforeEach(() => {
-    sinon.stub( utils, 'ajax' )
-    utils.ajax.onCall( 0 ).resolves({})
+    sinon.stub( global, 'fetch' )
+    fetch.onCall( 0 ).resolves({})
   })
 
   afterEach(() => {
-    utils.ajax.restore()
+    fetch.restore()
   })
 
   describe( 'calling the endpoint', () => {

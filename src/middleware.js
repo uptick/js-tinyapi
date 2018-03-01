@@ -1,4 +1,4 @@
-import { ajax } from './utils'
+import { ajaxWithRequest } from './utils'
 
 /**
  * Base class for middleware.
@@ -31,6 +31,6 @@ export default class Middleware {
    * Submit a request.
    */
   submit = request => {
-    return ajax( request )
+    return ajaxWithRequest( request )
   }
 }

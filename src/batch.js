@@ -1,3 +1,4 @@
+import { fetchHeaders } from './utils'
 import Middleware from './middleware'
 
 /**
@@ -51,16 +52,29 @@ export default class Batch extends Middleware {
     return {
       url: this.batchUrl,
       method: 'post',
-      body: batch.map( b => this.transformRequest( b.request ) ),
+      body: JSON.stringify({
+        batch: batch.map( b => this.transformRequest( b.request ) )
+      }),
+      headers: fetchHeaders({
+        method: 'post',
+      }),
+      credentials: 'same-origin'
     }
   }
 
   transformRequest = request => {
-    return {
+    let r = {
+      url: request.url,
       method: request.method,
-      body: request.body,
-      headers: request.headers,
+      headers: request.headers
     }
+    if( request.body ) {
+      r.body = request.body
+    }
+    if( request.headers ) {
+      r.headers = request.headers
+    }
+    return r
   }
 
   splitResponses = ( batch, responses ) => {
@@ -69,7 +83,7 @@ export default class Batch extends Middleware {
 
       // Currently use the presence of "status_code" to know that
       // something has gone wrong.
-      if( r.status_code !== undefined ) {
+      if( r.status_code && r.status_code >= 300 ) {
         batch[ii].reject( r.body )
       }
       else {

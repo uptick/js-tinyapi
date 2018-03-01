@@ -10,10 +10,12 @@ import {
   supplant,
   addTrailingSlash,
   matchContentType,
-  makeFormData
+  makeFormData,
+  makeRequest
 } from './utils'
-import { Middleware } from './middleware'
 import { ApiError } from './errors'
+import Middleware from './middleware'
+import Batch from './batch'
 
 /**
  * Describes an API.
@@ -180,7 +182,7 @@ export default class Api {
     } = options
     let {
       urlRoot,
-      contentType = endpoint.contentType,
+      contentType = endpoint.contentType
     } = options
 
     // "type" is used a convenient shorthand for the content type.
@@ -250,6 +252,7 @@ export default class Api {
     // user's responsibility to ensure only one middleware wants to return
     // a promise.
     else {
+      req = makeRequest( req )
       let ii = 0
       let obj = this.middlewares[ii++].process( req )
       for( ; ii < this.middlewares.length; ++ii ) {
@@ -273,6 +276,7 @@ export {
   postJson,
   postForm,
   ajaxSettings,
+  ApiError,
   Middleware,
-  ApiError
+  Batch
 }
