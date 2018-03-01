@@ -1,6 +1,6 @@
 {
   "name": "js-tinyapi",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "A simple and lightweight API helper.",
   "repository": {
     "type": "git",
@@ -11,8 +11,8 @@
     "index.js"
   ],
   "scripts": {
-    "build": "webpack --config webpack/index.js --mode development",
-    "build:prod": "webpack --config webpack/index.js --mode production",
+    "build": "webpack --config webpack.config.js --mode development",
+    "build:prod": "webpack --config webpack.config.js --mode production",
     "prepublish": "npm run build",
     "test": "mocha --require babel-polyfill --compilers js:babel-register -R nyan --recursive tests/*.js"
   },
@@ -37,6 +37,6 @@
     "webpack-node-externals": "^1.6.0"
   },
   "dependencies": {
-    "js-cookie": "^2.1.3"
+    "js-cookie": "^2.1.4"
   }
 }
