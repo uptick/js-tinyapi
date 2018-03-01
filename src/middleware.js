@@ -11,10 +11,6 @@ import { ajaxWithRequest } from './utils'
  */
 export default class Middleware {
 
-  constructor( api ) {
-    this.api = api
-  }
-
   /**
    * Entrypoint for middleware.
    *

@@ -22,9 +22,7 @@ describe( 'Given an Api with Batch middleware', () => {
       }
     }
   })
-  let batch = new Batch( api )
-  batch.batchUrl = '/batch/'
-  api.middlewares.push( batch )
+  api.pushMiddleware( new Batch({ batchUrl: '/batch/' }) )
 
   beforeEach(() => {
     sinon.stub( global, 'fetch' )

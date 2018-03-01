@@ -8,11 +8,11 @@ import Middleware from './middleware'
  */
 export default class Batch extends Middleware {
 
-  constructor( ...args ) {
-    super( ...args )
-    this.batchUrl = null
+  constructor( opts ) {
+    super()
+    this.batchUrl = opts.batchUrl
     this.batch = []
-    this.timeout = 100 // ms
+    this.timeout = opts.timeout // ms
     this._to = null
   }
 

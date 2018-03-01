@@ -31,6 +31,26 @@ export default class Api {
     this.merge( endpoints )
   }
 
+  pushMiddleware = middleware => {
+    if( !Array.isArray( middleware ) ) {
+      middleware = [middleware]
+    }
+    middleware.forEach( m => {
+      m.api = this
+      this.middlewares.push( m )
+    })
+  }
+
+  unshiftMiddleware = middleware => {
+    if( !Array.isArray( middleware ) ) {
+      middleware = [middleware]
+    }
+    middleware.forEach( m => {
+      m.api = this
+      this.middlewares.unshift( m )
+    })
+  }
+
   /**
    * Merge an endpoint tree.
    */
