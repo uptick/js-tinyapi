@@ -1,102 +1,240 @@
-import Cookies from 'js-cookie';
+import Cookies from 'js-cookie'
 
-export function ApiError( message ) {
-  this.message = message;
-  this.stack = (new Error()).stack;
+import { ApiError } from './errors'
+
+/**
+ * Make it a little easier to use content types.
+ */
+const contentTypes = {
+  form: 'application/x-www-form-urlencoded',
+  multiForm: 'multipart/form-data',
+  json: 'application/json',
+  jsonApi: 'application/vnd.api+json'
 }
-ApiError.prototype = Object.create( Error.prototype );
-ApiError.prototype.name = 'ApiError';
 
-export function supplant( text, o ) {
+/**
+ *
+ */
+function debug() {
+  if( console.debug ) {
+    console.debug.apply( null, arguments )
+  }
+} 
+
+function matchContentType( src, id ) {
+  if( !src ) {
+    return false
+  }
+  let ii = src.indexOf( ';' )
+  if( ii >= 0 ) {
+    src = src.substring( 0, ii )
+  }
+  return src.toLowerCase() == contentTypes[id]
+}
+
+function addTrailingSlash( path ) {
+  return path + ((path[path.length - 1] == '/') ? '' : '/')
+}
+
+/**
+ * Find and replace terms in a string.
+ *
+ * Terms are identified by being surrounded by curly braces, such as
+ * this: "a string with a {substitution}". Here, "substitution" will
+ * be replaced by looking for the same named key in the supplied
+ * mapping.
+ *
+ * @param {string} text - The string with replacements.
+ * @param {object} mapping - The mapping.
+ */
+export function supplant( text, mapping ) {
   return text.replace(
     /{([^{}]*)}/g,
     function( a, b ) {
-      var r = o[b];
-      if( r === undefined )
-        throw new ApiError( `Missing string template: ${b}` );
-      return typeof r === 'string' || typeof r === 'number' ? r : a;
+      let r = mapping[b]
+      if( r === undefined ) {
+        throw new ApiError( `Missing string template: ${b}` )
+      }
+      return typeof r === 'string' || typeof r === 'number' ? r : a
     }
-  );
-}
-
-export function capitalize( name ) {
-  return name[0].toUpperCase() + name.slice( 1 );
+  )
 }
 
 /**
- * Global storage for current csrf settings.
+ * Capitalize a string.
+ *
+ * @param {string} text - The string to capitalize.
  */
-var ajaxSettings = {
-  csrf: Cookies.get( 'csrftoken' ) || 'NO-CSRF-TOKEN',
-  bearer: null
-};
+export function capitalize( text ) {
+  return text[0].toUpperCase() + text.slice( 1 )
+}
 
+/**
+ * Global storage for authorization and CSRF.
+ *
+ * Often when making requests the same credentials or CSRF token needs
+ * to be used. This is a place to store these details. Currently
+ * accepts "csrf" and "bearer" values. Upon initialisation cookies
+ * are examined for a current value for the CSRF token (looks for
+ * a cookie called "csrftoken").
+ */
+let ajaxSettings = {
+  csrf: Cookies ? (Cookies.get( 'csrftoken' ) || '') : '',
+  bearer: null
+}
+
+/**
+ * Construct headers for a fetch request.
+ *
+ * Uses the HTML5 Headers object to formulate an appropriate set of
+ * headers based on the supplied options.
+ *
+ * @param {string} method - The request method. Defaults to "get".
+ * @param {string} contentType - The content type of the request. Defaults to "application/json".
+ * @param {object} extraHeaders - Custom headers to add.
+ * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
+ */
 function fetchHeaders( opts ) {
   const {
     method = 'get',
-    dataType,
-    contentType='application/vnd.api+json',
-    additionalHeaders,
+    contentType = contentTypes.json,
+    extraHeaders,
     useBearer = true
-  } = opts || {};
+  } = opts || {}
   let headers = new Headers({
     'X-Requested-With': 'XMLHttpRequest'
-  });
-  // TODO: What is going on here??
-  if( dataType == 'json' )
-    headers.set( 'Content-Type', contentType );
-  if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) )
-    headers.set( 'X-CSRFToken', ajaxSettings.token );
+  })
+  headers.set( 'Content-Type', contentType )
+  if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) ) {
+    headers.set( 'X-CSRFToken', ajaxSettings.csrf )
+  }
   if( useBearer && ajaxSettings.bearer ) {
     headers.set( 'Authorization', 'Bearer ' + ajaxSettings.bearer )
   }
-  for ( const k in additionalHeaders )
-    headers.set(k, additionalHeaders[k])
-  return headers;
+  for ( const k in (extraHeaders || {}) ) {
+    headers.set( k, extraHeaders[k] )
+  }
+  return headers
 }
 
-export function ajax( url, body, method, dataType, contentType, additionalHeaders, useBearer ) {
+/**
+ * Perform an ajax request.
+ *
+ * Uses HTML5 fetch to perform an ajax request according to parameters
+ * supplied via the options object.
+ *
+ * @param {string} url - The URL to make the request to.
+ * @param {string} method - The request method. Defaults to "get".
+ * @param {string} body - Data to be sent with the request.
+ * @param {string} contentType - The content type of the request. Defaults to "application/json".
+ * @param {object} extraHeaders - Custom headers to add.
+ * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
+ */
+function ajax( opts ) {
+  const method = (opts.method || 'get').toLowerCase()
+  const {
+    url,
+    body,
+    contentType,
+    extraHeaders,
+    useBearer = true
+  } = opts || {}
+
   let requestInit = {
     method,
-    headers: fetchHeaders({ method, dataType, contentType, additionalHeaders, useBearer }),
+    headers: fetchHeaders({
+      method,
+      contentType,
+      extraHeaders,
+      useBearer
+    }),
     credentials: 'same-origin'
-  };
-  if( method.toLowerCase() != 'get' &&  method.toLowerCase() != 'head' && method.toLowerCase() != 'options')
+  }
+  if( method != 'get' && method != 'head' && method != 'options') {
     requestInit.body = body
-  let request = new Request( url, requestInit );
+  }
+
+  let request = new Request( url, requestInit )
   return fetch( request )
     .then( response => {
-      if( response.ok ) {
-        if( response.status != 204 ) {
-          if (typeof TINYAPI_NODE !== 'undefined' && TINYAPI_NODE) {
-            return response
-          }
+      if( !!response.ok ) {
+        if( response.status == 204 ) {
+          return {}
+        }
+        if( typeof TINYAPI_NODE !== 'undefined' && TINYAPI_NODE ) {
+          return response
+        }
+        if( !!response.json ) {
           return response.json()
         }
-        else
-          return {};
+        else {
+          return response
+        }
       }
-      return response.json()
-                     .catch( e => Object({ status: response.status }))
-                     .then( e => Promise.reject( e ));
-    });
+      if( !!response.json ) {
+        return response.json()
+                       .catch( e => Object({ status: response.status }) )
+                       .then( e => Promise.reject( e ) )
+      }
+      else {
+        return response
+      }
+    })
 }
 
 /**
- * Helper for posting JSON data.
+ * Post JSON data.
+ *
+ * @param {string} url - The URL to make the request to.
+ * @param {object} payload - Data to be sent with the request.
+ * @param {string} contentType - The content type of the request. Defaults to "application/json".
+ * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
  */
-function postJson( url, data, contentType ) {
-  return ajax( url, JSON.stringify( data ), 'post', 'json', contentType, {} );
+function postJson({ url, payload, contentType, useBearer }) {
+  return ajax({
+    url,
+    method: 'post',
+    body: JSON.stringify( payload || {} ),
+    contentType,
+    useBearer
+  })
 }
 
 /**
- * Helper for posting form data.
+ * Convert an object into HTML5 FormData.
  */
-function postForm({ url, payload, dataType, useBearer = true }) {
-  let body = new FormData();
-  for( let k in payload )
-    body.append( k, payload[k] );
-  return ajax( url, body, 'post', dataType, undefined, {}, useBearer );
+function makeFormData( payload ) {
+  let body = new FormData()
+  for( let k in (payload || {}) ) {
+    body.append( k, payload[k] )
+  }
+  return body
 }
 
-export {postJson, postForm, ajaxSettings}
+/**
+ * Post form data.
+ *
+ * @param {string} url - The URL to make the request to.
+ * @param {object} payload - Data to be sent with the request.
+ * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
+ */
+function postForm({ url, payload, useBearer }) {
+  return ajax({
+    url,
+    body: makeFormData( payload ),
+    method: 'post',
+    useBearer
+  })
+}
+
+export {
+  debug,
+  addTrailingSlash,
+  ajax,
+  postJson,
+  postForm,
+  ajaxSettings,
+  contentTypes,
+  matchContentType,
+  makeFormData
+}
