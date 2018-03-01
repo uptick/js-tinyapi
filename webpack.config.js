@@ -1,16 +1,17 @@
 var webpack = require( 'webpack' )
 var path = require( 'path' )
-var NodeExternals = require( 'webpack-node-externals' )
+var PeerDepsExternalsPlugin = require( 'peer-deps-externals-webpack-plugin' )
 
 module.exports = {
-  context: path.resolve( __dirname + '/..' ),
+  target: 'web',
   entry: [
     './src/index'
   ],
   output: {
     path: path.resolve( './' ),
-    libraryTarget: 'umd',
-    filename: 'index.js'
+    filename: 'index.js',
+    library: 'js-tinyapi',
+    libraryTarget: 'umd'
   },
   module: {
     rules: [
@@ -28,7 +29,7 @@ module.exports = {
       '.js', '.jsx'
     ]
   },
-  externals: [
-    NodeExternals()
+  plugins: [
+    new PeerDepsExternalsPlugin()
   ]
 }
