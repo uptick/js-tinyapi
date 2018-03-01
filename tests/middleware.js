@@ -47,7 +47,7 @@ describe( 'Given an Api with a post and a middleware', () => {
       }
     }
   })
-  let middleware = new Middleware()
+  let middleware = new Middleware( api )
   api.middlewares.push( middleware )
 
   beforeEach(() => {
@@ -78,11 +78,11 @@ describe( 'Given an Api with a post and a middleware chain', () => {
     }
   })
   api.middlewares.push(...[
-    new PrefixMiddleware(),
-    new PrefixMiddleware(),
-    new SubmitMiddleware(),
-    new PostfixMiddleware(),
-    new PostfixMiddleware()
+    new PrefixMiddleware( api ),
+    new PrefixMiddleware( api ),
+    new SubmitMiddleware( api ),
+    new PostfixMiddleware( api ),
+    new PostfixMiddleware( api )
   ])
 
   beforeEach(() => {
