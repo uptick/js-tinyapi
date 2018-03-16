@@ -157,6 +157,47 @@ being fetched. The second, response altering middleware, is able to modify
 a response after having been returned. The last, fetch middleware, is able
 to alter how each request is sent to a server.
 
+To create a basic middleware for modifying a request, inherit from the provided
+middleware baseclass and override the `process` method:
+
+```javascript
+import Middleware from './middleware'
+
+// Add an extra slash to all request URLs.
+class AddSlash extends Middleware {
+  process = request => {
+    return {
+      ...request,
+      url: request.url + '/'
+    }
+  }
+}
+```
+
+The above middleware returns a new request with an extra slash added to the URL.
+
+To create a middleware that performs a fetch, simply return a promise that will
+be resolved once the fetch has completed:
+
+```javascript
+import Middleware from './middleware'
+
+// Add an extra slash to all request URLs.
+class DelayedFetch extends Middleware {
+  process = request => {
+    return new Promise( (resolve, reject) => {
+      setTimeout( () => {
+        this.submit( request )
+            .then( r => resolve( r ) )
+      }, 500 )
+    })
+  }
+}
+```
+
+The above will add a 500ms delay to all requests. Notice the use of `this.submit`;
+this is a helper method to submit the supplied request object.
+
 As an example, a batching middleware is provided. It can be enabled as such:
 
 ```javascript
