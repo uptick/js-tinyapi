@@ -1,22 +1,29 @@
-# redux-tinyapi
+# js-tinyapi
 
 [![npm version](https://badge.fury.io/js/js-tinyapi.svg)](http://badge.fury.io/js/js-tinyapi)
 ![Downloads](http://img.shields.io/npm/dm/js-tinyapi.svg?style=flat)
 
 ## Installing
+
 ```sh
 yarn add js-tinyapi
 ```
 
+
 ## Setup
+
 Create a custom api object containing all the endpoints you create
+
 ```javascript
-import tinyApi from 'js-tinyapi'
-const api = new tinyApi()
+import API from 'js-tinyapi'
+const api = new API()
 ```
 
+
 ## Example
+
 Perform a `GET` request to an endpoint
+
 ```javascript
 // make endpoint
 api.makeEndpoint('people', '/api/people', 'GET')
@@ -30,7 +37,9 @@ api.people()
     console.log(error)
   })
 ```
+
 Perform a `POST` request an endpoint
+
 ```javascript
 // make endpoint
 api.makeEndpoint('people', '/api/people', 'POST')
@@ -46,7 +55,9 @@ api.people({
     console.log(error)
   })
 ```
+
 Perform a custom request
+
 ```javascript
   options = {
     method: 'GET',
@@ -68,7 +79,9 @@ Perform a custom request
     })
 ```
 
+
 ## Create CRUD endpoints
+
 ```javascript
 api.makeCrudEndpoints('people', '/api/')
 
@@ -79,8 +92,12 @@ api.peopleUpdate(123, payload) // PATCH /api/people?id=123 with payload
 api.peopleRemove(123) // DELETE /api/people?id=123
 api.peopleOptions() // OPTIONS /api/people
 ```
+
+
 ## Merge in new endpoints
+
 Merge in `POST` and/or `GET` endpoints
+
 ```javascript
 api.merge({
   api: {
@@ -98,7 +115,9 @@ api.merge({
 api.peopleGet() // GET /api/people
 api.peoplePost(payload) // POST /api/people with payload
 ```
+
 Merge in a `CRUD` endpoint. The result of this merge is equivalent to the above [Create CRUD endpoints](#Create-CRUD-endpoints) example.
+
 ```javascript
 api.merge({
   api: {
@@ -119,3 +138,39 @@ api.merge({
 // equivalent to
 api.makeCrudEndpoints('people', '/api/')
 ```
+
+
+## Middleware
+
+A middleware layer is provided in order to easily alter the characteristics
+of requests made through `js-tinyapi`. Three kinds of middleware may be
+created:
+
+ 1. Request altering middleware.
+
+ 2. Response altering middleware.
+
+ 3. Fetch middleware.
+
+The first, request altering middleware, is able to modify a request prior to
+being fetched. The second, response altering middleware, is able to modify
+a response after having been returned. The last, fetch middleware, is able
+to alter how each request is sent to a server.
+
+As an example, a batching middleware is provided. It can be enabled as such:
+
+```javascript
+import API, { Batch } from 'js-tinyapi'
+const api = new API()
+// prepare API as usual
+api.pushMiddleware(
+  new Batch({
+    batchUrl: 'http://your.domain/api/batch/',
+    timeout: 50
+  })
+)
+```
+
+This causes each incoming request to be "held" for up to 50 milliseconds,
+waiting for further requests to be made. Once the timeout has expired, all
+collected requests are sent to the batch endpoint simultaneously.
