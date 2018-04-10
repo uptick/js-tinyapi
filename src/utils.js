@@ -12,14 +12,6 @@ const contentTypes = {
   jsonApi: 'application/vnd.api+json'
 }
 
-/**
- * TODO: Get rid of this, we can optimise better without it.
- */
-function debug() {
-  if (console.debug)
-    console.debug.apply(null, arguments)
-}
-
 function matchContentType(src, id) {
   if (!src)
     return false
@@ -66,6 +58,10 @@ export function capitalize( text ) {
   return text[0].toUpperCase() + text.slice( 1 )
 }
 
+function isEmpty(value) {
+  return value === '' || value === undefined || value === null
+}
+
 /**
  * Global storage for authorization and CSRF.
  *
@@ -76,7 +72,7 @@ export function capitalize( text ) {
  * a cookie called "csrftoken").
  */
 let ajaxSettings = {
-  csrf: Cookies ? (Cookies.get( 'csrftoken' ) || '') : '',
+  csrf: Cookies ? Cookies.get('csrftoken') : undefined,
   bearer: null
 }
 
@@ -99,21 +95,16 @@ function fetchHeaders( opts ) {
     useBearer = true,
     bearer
   } = opts || {}
-  let headers = new Headers({
-    'X-Requested-With': 'XMLHttpRequest'
-  })
-  headers.set( 'Content-Type', contentType )
-  if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) ) {
-    headers.set( 'X-CSRFToken', ajaxSettings.csrf )
-  }
-  if( !bearer )
+  let headers = new Headers({'X-Requested-With': 'XMLHttpRequest'})
+  headers.set('Content-Type', contentType)
+  if (!isEmpty(ajaxSettings.csrf) && !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test(method)))
+    headers.set('X-CSRFToken', ajaxSettings.csrf)
+  if (!bearer)
     bearer = ajaxSettings.bearer
-  if( useBearer && bearer ) {
-    headers.set( 'Authorization', 'Bearer ' + bearer )
-  }
-  for ( const k in (extraHeaders || {}) ) {
+  if (useBearer && bearer)
+    headers.set('Authorization', 'Bearer ' + bearer)
+  for (const k in (extraHeaders || {}))
     headers.set( k, extraHeaders[k] )
-  }
   return headers
 }
 
@@ -291,7 +282,6 @@ function postForm({ url, payload, useBearer }) {
 }
 
 export {
-  debug,
   addTrailingSlash,
   ajax,
   postJson,

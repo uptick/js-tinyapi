@@ -13,7 +13,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.js --mode development",
     "watch": "webpack --config webpack.config.js --mode development --watch",
-    "build:prod": "webpack --config webpack.config.js --mode production",
+    "build:prod": "webpack --mode production --progress --colors --env.production=true",
     "prepublish": "npm run build",
     "test": "mocha --require babel-polyfill --compilers js:babel-register -R nyan --recursive tests/*.js"
   },
@@ -28,6 +28,7 @@
     "babel-preset-react": "^6.3.13",
     "babel-preset-stage-0": "^6.3.13",
     "babel-register": "^6.6.5",
+    "clean-webpack-plugin": "^0.1.19",
     "code": "^5.2.0",
     "form-data": "^2.3.2",
     "isomorphic-fetch": "^2.2.1",

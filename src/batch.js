@@ -8,7 +8,7 @@ import Middleware from './middleware'
  */
 export default class Batch extends Middleware {
 
-  constructor( opts ) {
+  constructor(opts) {
     super()
     this.batchUrl = opts.batchUrl
     this.batch = []
@@ -17,7 +17,7 @@ export default class Batch extends Middleware {
   }
 
   process = request => {
-    let b = { request }
+    let b = {request}
 
     // Note that the promise function argument runs synchronously
     // in order to explicitly support this use-case.
@@ -43,9 +43,9 @@ export default class Batch extends Middleware {
     this.batch = []
     this._to = null
 
-    let request = this.combineRequests( batch )
-    this.submit( request )
-        .then( r => this.splitResponses( batch, r ) )
+    let request = this.combineRequests(batch)
+    this.submit(request)
+        .then(r => this.splitResponses(batch, r))
   }
 
   combineRequests = batch => {
@@ -77,18 +77,16 @@ export default class Batch extends Middleware {
     return r
   }
 
-  splitResponses = ( batch, responses ) => {
-    for( let ii = 0; ii < batch.length; ++ii ) {
+  splitResponses = (batch, responses) => {
+    for (let ii = 0; ii < batch.length; ++ii) {
       let r = responses[ii]
 
       // Currently use the presence of "status_code" to know that
       // something has gone wrong.
-      if( r.status_code && r.status_code >= 300 ) {
-        batch[ii].reject( r.body )
-      }
-      else {
-        batch[ii].resolve( r.body )
-      }
+      if (r.status_code && r.status_code >= 300)
+        batch[ii].reject(r.body)
+      else
+        batch[ii].resolve(r.body)
     }
   }
 }

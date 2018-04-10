@@ -1,6 +1,5 @@
 import { jsonApiQuery } from './jsonapi'
 import {
-  debug,
   ajax,
   contentTypes,
   postJson,
@@ -264,7 +263,7 @@ export default class Api {
     // If there are no middlewares, we are free to fulfill the request
     // now.
     if( !this.middlewares.length ) {
-      debug( `API ${method} ${type}: ${finalPath}`, payload )
+      console.debug( `API ${method} ${type}: ${finalPath}`, payload )
       return ajax( req )
     }
 
