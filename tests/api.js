@@ -133,17 +133,17 @@ describe( 'Given multiple methods in an Api', () => {
 
     it( 'should use the GET method', () => {
       api.a()
-      expect( fetch.args[0][0].method ).to.equal( 'get' )
+      expect( fetch.args[0][0].method ).to.equal('GET')
     })
 
     it( 'should use the POST method', () => {
       api.b()
-      expect( fetch.args[0][0].method ).to.equal( 'post' )
+      expect( fetch.args[0][0].method ).to.equal('POST')
     })
 
     it( 'should use the PATCH method', () => {
       api.c()
-      expect( fetch.args[0][0].method ).to.equal( 'patch' )
+      expect( fetch.args[0][0].method ).to.equal('PATCH')
     })
 
   })
@@ -187,6 +187,20 @@ describe( 'Given a JSON-API endpoint', () => {
         }
       })
       expect( fetch.args[0][0].path ).to.equal( '/A/?filter[b]=10&filter[c]=20' )
+    })
+
+  })
+
+  describe('supplying sparse fields', function() {
+
+    it('should alter the query string', () => {
+      api.a({
+        fields: {
+          a: ['b', 'c'],
+          d: ['e']
+        }
+      })
+      expect(fetch.args[0][0].path).to.equal('/A/?fields[a]=b,c&fields[d]=e')
     })
 
   })

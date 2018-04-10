@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie'
 
-import { ApiError } from './errors'
+import {ApiError} from './errors'
 
 /**
  * Make it a little easier to use content types.
@@ -13,22 +13,19 @@ const contentTypes = {
 }
 
 /**
- *
+ * TODO: Get rid of this, we can optimise better without it.
  */
 function debug() {
-  if( console.debug ) {
-    console.debug.apply( null, arguments )
-  }
-} 
+  if (console.debug)
+    console.debug.apply(null, arguments)
+}
 
-function matchContentType( src, id ) {
-  if( !src ) {
+function matchContentType(src, id) {
+  if (!src)
     return false
-  }
-  let ii = src.indexOf( ';' )
-  if( ii >= 0 ) {
-    src = src.substring( 0, ii )
-  }
+  let ii = src.indexOf(';')
+  if (ii >= 0)
+    src = src.substring(0, ii)
   return src.toLowerCase() == contentTypes[id]
 }
 
@@ -95,11 +92,12 @@ let ajaxSettings = {
  * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
  */
 function fetchHeaders( opts ) {
-  const {
+  let {
     method = 'get',
     contentType = contentTypes.json,
     extraHeaders,
-    useBearer = true
+    useBearer = true,
+    bearer
   } = opts || {}
   let headers = new Headers({
     'X-Requested-With': 'XMLHttpRequest'
@@ -108,8 +106,10 @@ function fetchHeaders( opts ) {
   if( !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test( method )) ) {
     headers.set( 'X-CSRFToken', ajaxSettings.csrf )
   }
-  if( useBearer && ajaxSettings.bearer ) {
-    headers.set( 'Authorization', 'Bearer ' + ajaxSettings.bearer )
+  if( !bearer )
+    bearer = ajaxSettings.bearer
+  if( useBearer && bearer ) {
+    headers.set( 'Authorization', 'Bearer ' + bearer )
   }
   for ( const k in (extraHeaders || {}) ) {
     headers.set( k, extraHeaders[k] )
@@ -118,13 +118,14 @@ function fetchHeaders( opts ) {
 }
 
 function makeRequest( opts ) {
-  const method = (opts.method || 'get').toLowerCase()
+  const method = (opts.method || 'get').toUpperCase()
   const {
     url,
     body,
     contentType,
     extraHeaders,
-    useBearer = true
+    useBearer = true,
+    bearer
   } = opts || {}
   let request = {
     url,
@@ -133,11 +134,12 @@ function makeRequest( opts ) {
       method,
       contentType,
       extraHeaders,
-      useBearer
+      useBearer,
+      bearer
     }),
     credentials: 'same-origin'
   }
-  if( method != 'get' && method != 'head' && method != 'options') {
+  if( method != 'GET' && method != 'HEAD' && method != 'OPTIONS') {
     request.body = body
   }
   return request
@@ -157,13 +159,14 @@ function makeRequest( opts ) {
  * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
  */
 function ajax( opts ) {
-  const method = (opts.method || 'get').toLowerCase()
+  const method = (opts.method || 'get').toUpperCase()
   const {
     url,
     body,
     contentType,
     extraHeaders,
-    useBearer = true
+    useBearer = true,
+    bearer
   } = opts || {}
 
   let requestInit = {
@@ -172,11 +175,12 @@ function ajax( opts ) {
       method,
       contentType,
       extraHeaders,
-      useBearer
+      useBearer,
+      bearer
     }),
     credentials: 'same-origin'
   }
-  if( method != 'get' && method != 'head' && method != 'options') {
+  if( method != 'GET' && method != 'HEAD' && method != 'OPTIONS') {
     requestInit.body = body
   }
 

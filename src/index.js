@@ -198,7 +198,8 @@ export default class Api {
       extraHeaders = {},
       include = (endpoint.include || []),
       filter = (endpoint.filter || {}),
-      sort = (endpoint.sort || [])
+      sort = (endpoint.sort || []),
+      fields = (endpoint.fields || [])
     } = options
     let {
       urlRoot,
@@ -217,7 +218,7 @@ export default class Api {
     let queryString = []
     if( method != 'get' && method != 'options' ) {
       if( payload !== undefined ) {
-        if( matchContentType( contentType, 'form' ) ) {
+        if( matchContentType( contentType, 'form' ) || matchContentType( contentType, 'multiForm' ) ) {
           body = makeFormData( payload )
         }
         else {
@@ -238,7 +239,7 @@ export default class Api {
     let finalPath = supplant( path, params )
 
     // Add any JSONAPI query strings.
-    finalPath += jsonApiQuery({ initial: queryString, include, filter, sort })
+    finalPath += jsonApiQuery({initial: queryString, include, filter, sort, fields})
 
     // If we've been given an URL root, add it in here. This is useful
     // for writing Node tests.
@@ -256,7 +257,8 @@ export default class Api {
       method,
       body,
       contentType,
-      extraHeaders
+      extraHeaders,
+      bearer: this.bearer
     }
 
     // If there are no middlewares, we are free to fulfill the request

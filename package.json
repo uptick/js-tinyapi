@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build": "webpack --config webpack.config.js --mode development",
+    "watch": "webpack --config webpack.config.js --mode development --watch",
     "build:prod": "webpack --config webpack.config.js --mode production",
     "prepublish": "npm run build",
     "test": "mocha --require babel-polyfill --compilers js:babel-register -R nyan --recursive tests/*.js"
