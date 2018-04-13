@@ -14,12 +14,12 @@ function jsonApiSort(values, key) {
   return jsonApiList(values, key || 'sort')
 }
 
-function jsonApiFilter(values, key) {
+function jsonApiFilter(values, options) {
+  const {key, raw} = options || {}
   if (values && Object.keys(values).length) {
     const k = key || 'filter'
-    return Object.keys(values).map(attr =>
-      `filter[${attr}]=${values[attr]}`
-    )
+    const tmpl = raw ? ((k, v) => `${k}=${v}`) : ((k, v) => `filter[${k}]=${v}`)
+    return Object.keys(values).map(attr => tmpl(attr, values[attr]))
   }
   return []
 }
@@ -39,11 +39,12 @@ function jsonApiQuery(opts) {
     include,
     sort,
     filter,
-    fields
+    fields,
+    rawFilters: raw
   } = opts || {}
   let parts = (opts.initial || []).concat(
     jsonApiInclude(include).concat(
-      jsonApiFilter(filter).concat(
+      jsonApiFilter(filter, {raw}).concat(
         jsonApiSort(sort).concat(
           jsonApiFields(fields)
         )

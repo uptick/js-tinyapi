@@ -189,6 +189,19 @@ describe( 'Given a JSON-API endpoint', () => {
       expect( fetch.args[0][0].path ).to.equal( '/A/?filter[b]=10&filter[c]=20' )
     })
 
+    it( 'should accept raw filters', () => {
+      // TODO: Make this temporary
+      api.rawFilters = true
+      api.a({
+        filter: {
+          b: 10,
+          c: 20
+        }
+      })
+      expect( fetch.args[0][0].path ).to.equal( '/A/?b=10&c=20' )
+      api.rawFilters = false
+    })
+
   })
 
   describe('supplying sparse fields', function() {

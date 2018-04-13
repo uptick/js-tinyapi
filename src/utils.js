@@ -281,6 +281,15 @@ function postForm({ url, payload, useBearer }) {
   })
 }
 
+export function takeFirst() {
+  if (arguments) {
+    for (const v of arguments) {
+      if (v !== undefined)
+        return v
+    }
+  }
+}
+
 export {
   addTrailingSlash,
   ajax,

@@ -12,6 +12,7 @@ export default class Batch extends Middleware {
     super()
     this.batchUrl = opts.batchUrl
     this.batch = []
+    this.maximum = 20
     this.timeout = opts.timeout // ms
     this._to = null
   }
@@ -25,13 +26,20 @@ export default class Batch extends Middleware {
       b.resolve = resolve
       b.reject = reject
     })
-    this.batch.push( b )
+    this.batch.push(b)
+    if (this.batch.length == this.maximum) {
+      clearTimeout(this._to)
+      this.submitBatch()
+    }
+    else {
 
-    // The first request to come in sets the timer, and we don't
-    // reset the timer on any subsequent requests; it will just
-    // catch anything that comes in within the timeout.
-    if( !this._to ) {
-      this._to = setTimeout( this.submitBatch, this.timeout )
+      // The first request to come in sets the timer, and we don't
+      // reset the timer on any subsequent requests; it will just
+      // catch anything that comes in within the timeout.
+      if( !this._to ) {
+        this._to = setTimeout( this.submitBatch, this.timeout )
+      }
+
     }
 
     return promise
@@ -83,8 +91,13 @@ export default class Batch extends Middleware {
 
       // Currently use the presence of "status_code" to know that
       // something has gone wrong.
-      if (r.status_code && r.status_code >= 300)
-        batch[ii].reject(r.body)
+      if (r.status_code && r.status_code >= 300) {
+        batch[ii].reject({
+          status_code: r.status_code,
+          reason_phrase: r.reason_phrase,
+          body: r.body
+        })
+      }
       else
         batch[ii].resolve(r.body)
     }

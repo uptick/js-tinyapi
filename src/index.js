@@ -10,7 +10,8 @@ import {
   addTrailingSlash,
   matchContentType,
   makeFormData,
-  makeRequest
+  makeRequest,
+  takeFirst
 } from './utils'
 import { ApiError } from './errors'
 import Middleware from './middleware'
@@ -187,7 +188,7 @@ export default class Api {
   /**
    * Perform a request call.
    */
-  request( endpoint, options = {} ) {
+  request(endpoint, options = {}) {
     const {
       method = (endpoint.method || '').toLowerCase(),
       path = endpoint.path,
@@ -238,7 +239,14 @@ export default class Api {
     let finalPath = supplant( path, params )
 
     // Add any JSONAPI query strings.
-    finalPath += jsonApiQuery({initial: queryString, include, filter, sort, fields})
+    finalPath += jsonApiQuery({
+      initial: queryString,
+      include,
+      filter,
+      sort,
+      fields,
+      rawFilters: takeFirst(options.rawFilters, this.rawFilters, endpoint.rawFilters)
+    })
 
     // If we've been given an URL root, add it in here. This is useful
     // for writing Node tests.
