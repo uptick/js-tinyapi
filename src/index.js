@@ -199,7 +199,9 @@ export default class Api {
       include = (endpoint.include || []),
       filter = (endpoint.filter || {}),
       sort = (endpoint.sort || []),
-      fields = (endpoint.fields || [])
+      fields = (endpoint.fields || []),
+      rawFilters,
+      ...otherOptions
     } = options
     let {
       urlRoot,
@@ -245,7 +247,7 @@ export default class Api {
       filter,
       sort,
       fields,
-      rawFilters: takeFirst(options.rawFilters, this.rawFilters, endpoint.rawFilters)
+      rawFilters: takeFirst(rawFilters, this.rawFilters, endpoint.rawFilters)
     })
 
     // If we've been given an URL root, add it in here. This is useful
@@ -283,16 +285,16 @@ export default class Api {
     else {
       req = makeRequest( req )
       let ii = 0
-      let obj = this.middlewares[ii++].process( req )
+      let obj = this.middlewares[ii++].process( req, otherOptions )
       for( ; ii < this.middlewares.length; ++ii ) {
         if( Promise.resolve( obj ) == obj ) {
           for( ; ii < this.middlewares.length; ++ii ) {
             let mw = this.middlewares[ii]
-            obj = obj.then( r => mw.process( r ) )
+            obj = obj.then( r => mw.process( r, otherOptions ) )
           }
         }
         else {
-          obj = this.middlewares[ii].process( obj )
+          obj = this.middlewares[ii].process( obj, otherOptions )
         }
       }
       return obj

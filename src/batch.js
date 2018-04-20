@@ -17,8 +17,13 @@ export default class Batch extends Middleware {
     this._to = null
   }
 
-  process = request => {
+  process = (request, options) => {
     let b = {request}
+
+    // Don't try and batch a request specifically flagged to be avoided.
+    if (options.skipBatching) {
+      return this.submit(request)
+    }
 
     // Note that the promise function argument runs synchronously
     // in order to explicitly support this use-case.
