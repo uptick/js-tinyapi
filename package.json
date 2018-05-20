@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://github.com/ABASystems/js-tinyapi.git"
   },
+  "esnext": "src/index.js",
   "main": "index.js",
   "files": [
     "index.js"
@@ -18,7 +19,7 @@
     "test": "mocha --require babel-polyfill --compilers js:babel-register -R nyan --recursive tests/*.js"
   },
   "author": "Luke Hodkinson",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "babel-core": "^6.3.26",
     "babel-loader": "^7.1.3",
