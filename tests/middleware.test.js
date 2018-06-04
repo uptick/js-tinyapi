@@ -10,7 +10,7 @@ import Middleware from '../src/middleware'
 console.debug = () => {}
 
 class PrefixMiddleware extends Middleware {
-  process = obj => {
+  process = (api, obj) => {
     return {
       ...obj,
       before: (obj.before || 0) + 1
@@ -19,7 +19,7 @@ class PrefixMiddleware extends Middleware {
 }
 
 class SubmitMiddleware extends Middleware {
-  process = obj => {
+  process = (api, obj) => {
     return this.submit( obj ).then( result => ({
       ...result,
       before: obj.before
@@ -28,7 +28,7 @@ class SubmitMiddleware extends Middleware {
 }
 
 class PostfixMiddleware extends Middleware {
-  process = obj => {
+  process = (api, obj) => {
     return {
       ...obj,
       after: (obj.after || 0) + 1

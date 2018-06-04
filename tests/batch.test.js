@@ -20,6 +20,16 @@ describe( 'Given an Api with Batch middleware', () => {
       GET: {
         name: 'b'
       }
+    },
+    C: {
+      POST: {
+        name: 'c'
+      }
+    },
+    D: {
+      POST: {
+        name: 'd'
+      }
     }
   })
   api.pushMiddleware( new Batch({ batchUrl: '/batch/' }) )
@@ -67,6 +77,53 @@ describe( 'Given an Api with Batch middleware', () => {
                     .then( results => {
                       expect( results ).to.equal( ['error', 'b'] )
                     })
+    })
+
+  })
+
+  describe('using mutation batching',  () => {
+
+    it('works without mixing', () => {
+      fetch.onCall(0).resolves([
+        {
+          body: 'c'
+        },
+        {
+          body: 'd'
+        }
+      ])
+      const batch = api.batch()
+      batch.c()
+      batch.d()
+      return batch.send().then(results => {
+        expect(results).to.equal(['c', 'd'])
+      })
+    })
+
+    it('works with external batching', () => {
+      fetch.onCall(0).resolves([
+        {
+          body: 'a'
+        }
+      ])
+      fetch.onCall(1).resolves([
+        {
+          body: 'c'
+        },
+        {
+          body: 'd'
+        }
+      ])
+      const batch = api.batch()
+      batch.c()
+      batch.d()
+      return api.a().then(r => {
+        expect(r).to.equal('a')
+        return batch.send()
+      }).then(r => {
+        expect(r).to.equal(['c', 'd'])
+        return r
+      })
     })
 
   })

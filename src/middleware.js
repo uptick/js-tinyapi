@@ -12,6 +12,15 @@ import { ajaxWithRequest } from './utils'
 export default class Middleware {
 
   /**
+   * Add dynamic methods to the API.
+   *
+   * As an example, the batching middleware uses this method to add
+   * a "batch" method to the API.
+   */
+  contributeToApi( api ) {
+  }
+
+  /**
    * Entrypoint for middleware.
    *
    * This method should be overridden in sub-classes, and is used to

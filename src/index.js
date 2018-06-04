@@ -32,12 +32,13 @@ export default class Api {
   }
 
   pushMiddleware = middleware => {
-    if( !Array.isArray( middleware ) ) {
+    if ( !Array.isArray( middleware ) ) {
       middleware = [middleware]
     }
     middleware.forEach( m => {
       m.api = this
       this.middlewares.push( m )
+      m.contributeToApi( this )
     })
   }
 
@@ -125,14 +126,18 @@ export default class Api {
 
     // If we were given a function to call, bind it appropriately.
     // Otherwise just use the standard request.
-    let request = opts => this.request( ctx, opts )
+    let request = function(opts) {
+      return this.request(ctx, opts)
+    }
     const { handler } = opts
     if( handler !== undefined ) {
 
       // The first argument to the handler will be a function to call
       // the builtin handler. This allows the handler to easily finalise
       // the call after modifying any options.
-      let wrapper = ( ...args ) => handler( request, ...args )
+      let wrapper = function(...args) {
+        return handler(request, ...args)
+      }
       wrapper.context = ctx
       this[name] = wrapper
     }
@@ -285,16 +290,16 @@ export default class Api {
     else {
       req = makeRequest( req )
       let ii = 0
-      let obj = this.middlewares[ii++].process( req, otherOptions )
+      let obj = this.middlewares[ii++].process( this, req, otherOptions )
       for( ; ii < this.middlewares.length; ++ii ) {
         if( Promise.resolve( obj ) == obj ) {
           for( ; ii < this.middlewares.length; ++ii ) {
             let mw = this.middlewares[ii]
-            obj = obj.then( r => mw.process( r, otherOptions ) )
+            obj = obj.then( r => mw.process( this, r, otherOptions ) )
           }
         }
         else {
-          obj = this.middlewares[ii].process( obj, otherOptions )
+          obj = this.middlewares[ii].process( this, obj, otherOptions )
         }
       }
       return obj

@@ -15,8 +15,7 @@
     "build": "webpack --config webpack.config.js --mode development",
     "watch": "webpack --config webpack.config.js --mode development --watch",
     "build:prod": "webpack --mode production --progress --colors --env.production=true",
-    "prepublish": "npm run build",
-    "test": "mocha --require babel-polyfill --compilers js:babel-register -R nyan --recursive tests/*.js"
+    "test": "mocha --require babel-polyfill --require babel-core/register -R nyan --recursive tests/*.test.js"
   },
   "author": "Luke Hodkinson",
   "license": "MIT",
@@ -42,5 +41,8 @@
   },
   "peerDependencies": {
     "js-cookie": "^2.1.4"
+  },
+  "dependencies": {
+    "uuid": "^3.2.1"
   }
 }
