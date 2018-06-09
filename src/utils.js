@@ -76,6 +76,34 @@ let ajaxSettings = {
   bearer: null
 }
 
+function makeHeaders(opts) {
+  let {
+    method = 'get',
+    contentType = contentTypes.json,
+    extraHeaders,
+    useBearer = true,
+    bearer
+  } = opts || {}
+  let headers = {
+    'X-Requested-With': 'XMLHttpRequest',
+    'Content-Type': contentType
+  }
+  if (!isEmpty(ajaxSettings.csrf) && !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test(method))) {
+    headers['X-CSRFToken'] = ajaxSettings.csrf
+  }
+  if (!bearer) {
+    bearer = ajaxSettings.bearer
+  }
+  if (useBearer && bearer) {
+    headers.Authorization = `Bearer ${bearer}`
+  }
+  headers = {
+    ...headers,
+    ...extraHeaders
+  }
+  return headers
+}
+
 /**
  * Construct headers for a fetch request.
  *
@@ -87,25 +115,8 @@ let ajaxSettings = {
  * @param {object} extraHeaders - Custom headers to add.
  * @param {boolean} useBearer - Flag indicating whether to include bearer authorization.
  */
-function fetchHeaders( opts ) {
-  let {
-    method = 'get',
-    contentType = contentTypes.json,
-    extraHeaders,
-    useBearer = true,
-    bearer
-  } = opts || {}
-  let headers = new Headers({'X-Requested-With': 'XMLHttpRequest'})
-  headers.set('Content-Type', contentType)
-  if (!isEmpty(ajaxSettings.csrf) && !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test(method)))
-    headers.set('X-CSRFToken', ajaxSettings.csrf)
-  if (!bearer)
-    bearer = ajaxSettings.bearer
-  if (useBearer && bearer)
-    headers.set('Authorization', 'Bearer ' + bearer)
-  for (const k in (extraHeaders || {}))
-    headers.set( k, extraHeaders[k] )
-  return headers
+function fetchHeaders(opts) {
+  return new Headers(makeHeaders(opts))
 }
 
 function makeRequest( opts ) {
@@ -121,7 +132,7 @@ function makeRequest( opts ) {
   let request = {
     url,
     method,
-    headers: fetchHeaders({
+    headers: makeHeaders({
       method,
       contentType,
       extraHeaders,
@@ -219,19 +230,26 @@ function ajaxWithRequest( opts ) {
           return response
         }
         if( !!response.json ) {
-          return response.json()
+          return response.json().then(data => ({
+            data,
+            response
+          }))
         }
         else {
-          return response
+          return {response}
         }
       }
       if( !!response.json ) {
-        return response.json()
+        const data = response.json()
                        .catch( e => Object({ status: response.status }) )
-                       .then( e => Promise.reject( e ) )
+                             .then( e => Promise.reject( e ) )
+        return {
+          data,
+          response
+        }
       }
       else {
-        return response
+        return {response}
       }
     })
 }
@@ -301,5 +319,6 @@ export {
   makeFormData,
   makeRequest,
   ajaxWithRequest,
+  makeHeaders,
   fetchHeaders
 }

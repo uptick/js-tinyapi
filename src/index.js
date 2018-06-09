@@ -29,6 +29,8 @@ export default class Api {
     this.crud = {}
     this.middlewares = []
     this.merge( endpoints )
+    this.urlRoot = null
+    this.defaultType = null
   }
 
   pushMiddleware = middleware => {
@@ -38,7 +40,7 @@ export default class Api {
     middleware.forEach( m => {
       m.api = this
       this.middlewares.push( m )
-      m.contributeToApi( this )
+      m.contributeToApi(this)
     })
   }
 
@@ -136,7 +138,7 @@ export default class Api {
       // the builtin handler. This allows the handler to easily finalise
       // the call after modifying any options.
       let wrapper = function(...args) {
-        return handler(request, ...args)
+        return handler(request.bind(this), ...args)
       }
       wrapper.context = ctx
       this[name] = wrapper
@@ -199,7 +201,7 @@ export default class Api {
       path = endpoint.path,
       params = {},
       payload,
-      type = endpoint.type,
+      type = endpoint.type || this.defaultType,
       extraHeaders = {},
       include = (endpoint.include || []),
       filter = (endpoint.filter || {}),
@@ -209,7 +211,7 @@ export default class Api {
       ...otherOptions
     } = options
     let {
-      urlRoot,
+      urlRoot = this.urlRoot,
       contentType = endpoint.contentType
     } = options
 
@@ -277,9 +279,10 @@ export default class Api {
 
     // If there are no middlewares, we are free to fulfill the request
     // now.
+    let obj
     if( !this.middlewares.length ) {
       console.debug( `API ${method} ${type}: ${finalPath}`, payload )
-      return ajax( req )
+      obj = ajax( req )
     }
 
     // Otherwise, we need to pipe through all the middleware. This works
@@ -288,9 +291,16 @@ export default class Api {
     // user's responsibility to ensure only one middleware wants to return
     // a promise.
     else {
-      req = makeRequest( req )
+      req = makeRequest(req)
+
+      // Run all preprocess middlewares.
+      for (const mw of this.middlewares) {
+        req = mw.preProcess(this, req, otherOptions)
+      }
+
+      // Run the old version 1 middleware stack.
       let ii = 0
-      let obj = this.middlewares[ii++].process( this, req, otherOptions )
+      obj = this.middlewares[ii++].process(this, req, otherOptions)
       for( ; ii < this.middlewares.length; ++ii ) {
         if( Promise.resolve( obj ) == obj ) {
           for( ; ii < this.middlewares.length; ++ii ) {
@@ -302,8 +312,22 @@ export default class Api {
           obj = this.middlewares[ii].process( this, obj, otherOptions )
         }
       }
-      return obj
+
+      // If we didn't end up with a promise then send the request.
+      if (Promise.resolve(obj) != obj) {
+        obj = ajaxWithRequest(obj)
+      }
+
+      // Run postprocess middlewares.
+      for (const mw of this.middlewares.reverse()) {
+        obj = obj.then(r => mw.postProcess(this, r, otherOptions))
+      }
     }
+
+    // At this point the result will contain a data object and the
+    // response. Maintain backwards compatibility by only returning
+    // the data.
+    return obj.then(r => r.data)
   }
 }
 

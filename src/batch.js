@@ -1,6 +1,6 @@
 import uuid from 'uuid'
 
-import {fetchHeaders} from './utils'
+import {makeHeaders, fetchHeaders} from './utils'
 import Middleware from './middleware'
 
 /**
@@ -130,16 +130,13 @@ export default class Batch extends Middleware {
     if (request.body) {
       r.body = request.body
     }
-    if (request.headers) {
-      r.headers = request.headers
-    }
     return r
   }
 
-  splitResponses = (batch, responses) => {
+  splitResponses = (batch, response) => {
     const results = []
     for (let ii = 0; ii < batch.length; ++ii) {
-      let r = responses[ii]
+      let r = response.data[ii]
 
       // Currently use the presence of "status_code" to know that
       // something has gone wrong.
@@ -147,13 +144,22 @@ export default class Batch extends Middleware {
         const data = {
           status_code: r.status_code,
           reason_phrase: r.reason_phrase,
+          headers: r.headers || {},
           body: r.body
         }
-        batch[ii].reject(data)
+        // TODO: Should ensure this is treated the same way as
+        //  non batched errors.
+        batch[ii].reject({
+          response: data,
+          data
+        })
         results.push(data)
       }
       else {
-        batch[ii].resolve(r.body)
+        batch[ii].resolve({
+          response: r,
+          data: r.body
+        })
         results.push(r.body)
       }
     }

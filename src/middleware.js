@@ -17,7 +17,15 @@ export default class Middleware {
    * As an example, the batching middleware uses this method to add
    * a "batch" method to the API.
    */
-  contributeToApi( api ) {
+  contributeToApi(api) {
+  }
+
+  preProcess = (api, request, options) => {
+    return request
+  }
+
+  postProcess = (api, response, options) => {
+    return response
   }
 
   /**
@@ -28,8 +36,8 @@ export default class Middleware {
    * request information before being sent, or it may be the response
    * from a previous middleware sending the request.
    */
-  process = ( obj, ...args ) => {
-    return this.submit( obj )
+  process = (api, obj, options) => {
+    return obj
   }
 
   /**
