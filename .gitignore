@@ -36,3 +36,6 @@ lib
 example/bundle.js
 batch.js
 index.js
+
+# Emacs
+*~
