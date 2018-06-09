@@ -12,7 +12,7 @@ function configure(env) {
       './src/index'
     ],
     output: {
-      path: path.resolve('./'),
+      path: path.resolve('./dist/'),
       filename: 'index.js',
       library: 'js-tinyapi',
       libraryTarget: 'umd'
