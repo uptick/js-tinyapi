@@ -86,7 +86,9 @@ function makeHeaders(opts) {
   } = opts || {}
   let headers = {
     'X-Requested-With': 'XMLHttpRequest',
-    'Content-Type': contentType
+  }
+  if (contentType !== contentTypes.multiForm) {
+    headers['Content-Type'] = contentType
   }
   if (!isEmpty(ajaxSettings.csrf) && !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test(method))) {
     headers['X-CSRFToken'] = ajaxSettings.csrf
