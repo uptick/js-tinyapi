@@ -128,9 +128,8 @@ export default class Api {
 
     // If we were given a function to call, bind it appropriately.
     // Otherwise just use the standard request.
-    let request = function(opts) {
-      return this.request(ctx, opts)
-    }
+    let request = (opts) => this.request(ctx, opts)
+
     const { handler } = opts
     if( handler !== undefined ) {
 
@@ -138,7 +137,7 @@ export default class Api {
       // the builtin handler. This allows the handler to easily finalise
       // the call after modifying any options.
       let wrapper = function(...args) {
-        return handler(request.bind(this), ...args)
+        return handler(request, ...args)
       }
       wrapper.context = ctx
       this[name] = wrapper
@@ -154,7 +153,7 @@ export default class Api {
   /**
    * Automatically create a set of CRUD endpoint functions.
    */
-  makeCrudEndpoints( key, path ) {
+  makeCrudEndpoints = ( key, path ) => {
     const joiner = ((path[path.length - 1] == '/') ? '' : '/')
     const basePath = path + joiner + key
     this.crud[key] = {
@@ -195,7 +194,7 @@ export default class Api {
   /**
    * Perform a request call.
    */
-  request(endpoint, options = {}) {
+  request = (endpoint, options = {}) => {
     const {
       method = (endpoint.method || '').toLowerCase(),
       path = endpoint.path,
