@@ -17,7 +17,7 @@ export default class Batch extends Middleware {
     this.batch = {
       auto: []
     }
-    this.maximum = 20
+    this.maximum = 1000
     this.timeout = opts.timeout // ms
     this.mutMethods = new Set(['post', 'put', 'patch'])
     this._to = null
