@@ -139,31 +139,31 @@ export default class Batch extends Middleware {
     const results = []
     for (let ii = 0; ii < batch.length; ++ii) {
       let r = response.data[ii]
-
-      // Currently use the presence of "status_code" to know that
-      // something has gone wrong.
-      if (r.status_code && r.status_code >= 300) {
-        const data = {
-          status_code: r.status_code,
-          reason_phrase: r.reason_phrase,
-          headers: r.headers || {},
-          body: r.body
+      let data = r.body
+      let success = false
+      if (r.status_code) {
+        if (r.status_code >= 300) {
+          data = {
+            status_code: r.status_code,
+            reason_phrase: r.reason_phrase,
+            headers: r.headers || {},
+            body: r.body
+          }
         }
-        // TODO: Should ensure this is treated the same way as
-        //  non batched errors.
-        batch[ii].reject({
-          response: data,
-          data
-        })
-        results.push(data)
+        success = true
       }
-      else {
+      if (success) {
         batch[ii].resolve({
           response: r,
-          data: r.body
+          data,
         })
-        results.push(r.body)
+      } else {
+        batch[ii].reject({
+          response: r,
+          data,
+        })
       }
+      results.push(data)
     }
     return results
   }
