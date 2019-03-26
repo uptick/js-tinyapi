@@ -139,7 +139,7 @@ export default class Batch extends Middleware {
     const results = []
     for (let ii = 0; ii < batch.length; ++ii) {
       let r = response.data[ii]
-      const data = r.body
+      let data = r.body
       let success = false
       if (r.status_code) {
         if (r.status_code < 300) {
@@ -152,9 +152,10 @@ export default class Batch extends Middleware {
           data,
         })
       } else {
+        if (!data) data = {errors: {detail: r.reason_phrase}}
         batch[ii].reject({
           response: r,
-          data: data || {errors: {detail: r.reason_phrase}},
+          data,
         })
       }
       results.push(data)
