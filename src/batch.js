@@ -113,7 +113,7 @@ export default class Batch extends Middleware {
   }
 
   selectUrl = batch => {
-    if (Object.keys(batch).length > 1) {
+    if (batch.length > 1) {
       for (const b of batch) {
         if (this.mutMethods.has(b.request.method.toLowerCase())) {
           return this.mutableBatchUrl
