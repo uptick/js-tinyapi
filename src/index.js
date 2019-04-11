@@ -1,11 +1,11 @@
 import { jsonApiQuery } from './jsonapi'
 import {
   ajax,
+  ajaxWithRequest,
   contentTypes,
   postJson,
   postForm,
   ajaxSettings,
-  capitalize,
   supplant,
   addTrailingSlash,
   matchContentType,
