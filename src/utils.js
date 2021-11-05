@@ -72,7 +72,6 @@ function isEmpty(value) {
  * a cookie called "csrftoken").
  */
 let ajaxSettings = {
-  csrf: Cookies ? Cookies.get('csrftoken') : undefined,
   bearer: null
 }
 
@@ -90,8 +89,9 @@ function makeHeaders(opts) {
   if (contentType !== contentTypes.multiForm) {
     headers['Content-Type'] = contentType
   }
-  if (!isEmpty(ajaxSettings.csrf) && !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test(method))) {
-    headers['X-CSRFToken'] = ajaxSettings.csrf
+  const csrf = Cookies ? Cookies.get('csrftoken') : undefined
+  if (!isEmpty(csrf) && !(/^(GET|HEAD|OPTIONS\TRACE)$/i.test(method))) {
+    headers['X-CSRFToken'] = csrf
   }
   if (!bearer) {
     bearer = ajaxSettings.bearer
