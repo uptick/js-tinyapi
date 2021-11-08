@@ -4,7 +4,7 @@
   "description": "A simple and lightweight API helper.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ABASystems/js-tinyapi.git"
+    "url": "https://github.com/uptick/js-tinyapi.git"
   },
   "main": "dist/index.js",
   "files": [
